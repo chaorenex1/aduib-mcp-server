@@ -1,7 +1,7 @@
 # Aduib MCP Server
 ## 项目简介
 
-本项目为 一个基于 FastAPI 的 MCP 服务端，支持多种mcp feats，具有良好的扩展性和易用性。
+本项目为 一个基于 FastAPI 的 MCP 服务端，支持多种mcp 功能，具有良好的扩展性和易用性。
 
 ## 快速开始
 1. 安装环境
