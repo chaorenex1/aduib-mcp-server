@@ -22,7 +22,7 @@ from mcp.server.auth.middleware.bearer_auth import (
 )
 from mcp.server.auth.provider import OAuthAuthorizationServerProvider
 from mcp.server.auth.settings import (
-    AuthSettings,
+    AuthSettings, ClientRegistrationOptions, RevocationOptions,
 )
 from mcp.server.fastmcp.exceptions import ResourceError
 from mcp.server.fastmcp.prompts import Prompt, PromptManager
@@ -52,7 +52,7 @@ from mcp.types import PromptArgument as MCPPromptArgument
 from mcp.types import Resource as MCPResource
 from mcp.types import ResourceTemplate as MCPResourceTemplate
 from mcp.types import Tool as MCPTool
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, AnyHttpUrl
 from pydantic.networks import AnyUrl
 from pydantic_settings import BaseSettings
 from starlette.applications import Starlette
@@ -148,6 +148,14 @@ class FastMCP:
         **settings: Any,
     ):
         self.settings = Settings(**settings)
+
+        if auth_server_provider:
+            self.settings.auth =AuthSettings(
+                issuer_url=AnyHttpUrl("http://localhost:8000"),
+                required_scopes=["user"],
+                client_registration_options=ClientRegistrationOptions(enabled=True,valid_scopes=["user"],default_scopes=["user"]),
+                revocation_options=RevocationOptions(enabled=True),
+            )
 
         self._mcp_server = MCPServer(
             name=name or "FastMCP",

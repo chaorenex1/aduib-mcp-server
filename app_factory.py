@@ -12,6 +12,7 @@ from component.cache.redis_cache import init_cache
 from component.log.app_logging import init_logging
 from configs import config
 from controllers.route import api_router
+from libs.api_key_auth import ApiKeyAuthorizationServerProvider
 from libs.context import LoggingMiddleware, TraceIdContextMiddleware, ApiKeyContextMiddleware
 from libs.contextVar_wrapper import ContextVarWrappers
 from mcp_service import load_mcp_plugins
@@ -76,7 +77,7 @@ def init_fast_mcp(app: AduibAIApp):
     global mcp
     if not config.DISCOVERY_SERVICE_ENABLED:
         from fast_mcp import FastMCP
-        mcp = FastMCP(name=config.APP_NAME,instructions=config.APP_DESCRIPTION,version=config.APP_VERSION)
+        mcp = FastMCP(name=config.APP_NAME,instructions=config.APP_DESCRIPTION,version=config.APP_VERSION,auth_server_provider=ApiKeyAuthorizationServerProvider() if config.AUTH_ENABLED else None)
     else:
         if config.DISCOVERY_SERVICE_TYPE=="nacos":
             from nacos_mcp_wrapper.server.nacos_settings import NacosSettings
@@ -95,7 +96,8 @@ def init_fast_mcp(app: AduibAIApp):
             mcp = NacosMCP(name=config.APP_NAME,
                            nacos_settings=nacos_settings,
                            instructions=config.APP_DESCRIPTION,
-                           version=config.APP_VERSION)
+                           version=config.APP_VERSION,
+                           auth_server_provider=ApiKeyAuthorizationServerProvider() if config.AUTH_ENABLED else None)
     app.mcp = mcp
     load_mcp_plugins("mcp_service")
     log.info("fast mcp initialized successfully")
