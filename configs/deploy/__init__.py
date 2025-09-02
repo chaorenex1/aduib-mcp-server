@@ -36,6 +36,7 @@ class DeploymentConfig(BaseSettings):
 
 class AuthConfig(BaseSettings):
     AUTH_ENABLED: bool = Field(default=False, description="Enable authentication")
+    AUTH_ISSUER_URL: str = Field(default="http://127.0.0.1:5002", description="OAuth 2.0 issuer URL")
 
 
 class MCPConfig(BaseSettings):

@@ -29,7 +29,8 @@ class ApiKeyService:
 
     @staticmethod
     def create_api_key(name:str,
-                       description:Optional[str]
+                       description:Optional[str],
+                       source:Optional[str]=None
                        ) -> ApiKey:
         """
         create the api key
@@ -41,8 +42,28 @@ class ApiKeyService:
                              hash_key=hash_key[0],
                              salt=hash_key[1],
                              name=name,
+                             source=source,
                              description=description)
             session.add(api_key)
+            session.commit()
+        return api_key
+
+    @staticmethod
+    def update_api_key(key_id:int,
+                       name: str,
+                       description: Optional[str],
+                       source: Optional[str] = None
+                       ) -> ApiKey:
+        """
+        update the api key
+        """
+        with get_db() as session:
+            api_key = session.query(ApiKey).filter(ApiKey.id == key_id).first()
+            if not api_key:
+                raise ApiKeyNotFound("Api Key not found")
+            api_key.name = name
+            api_key.description = description
+            api_key.source = source
             session.commit()
         return api_key
 
@@ -80,3 +101,11 @@ class ApiKeyService:
         with get_db() as session:
             session.delete(session.query(ApiKey).filter(ApiKey.hash_key == api_hash_key).first())
             session.commit()
+
+    @staticmethod
+    def get_api_key_by_name(name:str) -> Optional[ApiKey]:
+        """
+        get the api key by name
+        """
+        with get_db() as session:
+            return session.query(ApiKey).filter(ApiKey.name == name).first()

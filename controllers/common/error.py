@@ -8,6 +8,15 @@ class ApiNotCurrentlyAvailableError(BaseHttpException):
 class ServiceError(BaseHttpException):
     def __init__(self, message: str = "service error"):
         super().__init__(error_code=500, error_msg=message)
+class BadRequestError(BaseHttpException):
+    def __init__(self, message: str = "bad request"):
+        super().__init__(error_code=400, error_msg=message)
+class UnauthorizedError(BaseHttpException):
+    def __init__(self, message: str = "unauthorized"):
+        super().__init__(error_code=401, error_msg=message)
+class ForbiddenError(BaseHttpException):
+    def __init__(self, message: str = "forbidden"):
+        super().__init__(error_code=403, error_msg=message)
 
 
 class InnerError(Exception):

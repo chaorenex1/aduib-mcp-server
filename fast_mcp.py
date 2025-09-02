@@ -151,10 +151,10 @@ class FastMCP:
 
         if auth_server_provider:
             self.settings.auth =AuthSettings(
-                issuer_url=AnyHttpUrl("http://localhost:8000"),
+                issuer_url=AnyHttpUrl(config.AUTH_ISSUER_URL),
                 required_scopes=["user"],
                 client_registration_options=ClientRegistrationOptions(enabled=True,valid_scopes=["user"],default_scopes=["user"]),
-                revocation_options=RevocationOptions(enabled=True),
+                revocation_options=RevocationOptions(enabled=False),
             )
 
         self._mcp_server = MCPServer(
