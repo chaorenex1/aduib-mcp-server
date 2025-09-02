@@ -4,6 +4,19 @@ from multiprocessing.spawn import freeze_support
 from app_factory import create_app, app_context, init_fast_mcp, run_mcp_server
 from nacos_mcp import NacosMCP
 
+"""
+Main entry point for the AduibAI application.
+{
+    "mcpServers": {
+        "aduib_server":{
+            "type": "streamableHttp",
+            "url": "http://10.0.0.124:5002",
+            "headers": {
+                "Authorization": "Bearer YOUR_API_KEY"
+        }
+    }
+}
+"""
 app=None
 if not app_context.get():
     app=create_app()
