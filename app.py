@@ -13,6 +13,7 @@ Main entry point for the AduibAI application.
             "url": "http://10.0.0.124:5002",
             "headers": {
                 "Authorization": "Bearer YOUR_API_KEY"
+            }
         }
     }
 }

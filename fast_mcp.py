@@ -52,7 +52,7 @@ from mcp.types import PromptArgument as MCPPromptArgument
 from mcp.types import Resource as MCPResource
 from mcp.types import ResourceTemplate as MCPResourceTemplate
 from mcp.types import Tool as MCPTool
-from pydantic import BaseModel, Field, AnyHttpUrl
+from pydantic import BaseModel, Field, AnyHttpUrl, ConfigDict
 from pydantic.networks import AnyUrl
 from pydantic_settings import BaseSettings
 from starlette.applications import Starlette
@@ -81,6 +81,9 @@ class Settings(BaseSettings, Generic[LifespanResultT]):
     #     nested_model_default_partial_update=True,
     #     extra="ignore",
     # )
+    model_config = ConfigDict(
+        extra="allow",
+    )
 
     # Server settings
     debug: bool = config.DEBUG
