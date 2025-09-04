@@ -1,7 +1,7 @@
 [project]
-name = "aduib_mcp_server_template"
+name = "aduib_mcp_server"
 version = "0.1.0"
-description = "A template for MCP server using FastAPI"
+description = "A MCP server using FastAPI"
 readme = "README.md"
 requires-python = ">=3.11,<3.13"
 license = {text = "Apache-2.0"}
