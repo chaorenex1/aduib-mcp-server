@@ -148,6 +148,7 @@ class FastMCP:
         event_store: EventStore | None = None,
         *,
         tools: list[Tool] | None = None,
+        version: str | None = None,
         **settings: Any,
     ):
         self.settings = Settings(**settings)
@@ -163,6 +164,7 @@ class FastMCP:
         self._mcp_server = MCPServer(
             name=name or "FastMCP",
             instructions=instructions,
+            version=version,
             lifespan=(
                 lifespan_wrapper(self, self.settings.lifespan)
                 if self.settings.lifespan
