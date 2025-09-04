@@ -1,5 +1,5 @@
 [project]
-name = "aduib_mcp_server"
+name = "aduib-mcp-server"
 version = "0.1.0"
 description = "A MCP server using FastAPI"
 readme = "README.md"
