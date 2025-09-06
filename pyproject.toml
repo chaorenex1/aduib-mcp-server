@@ -23,8 +23,10 @@ dependencies = [
     "pyyaml",
     "pytz"
 ]
-[tool.setuptools]
-packages = []
+[project.optional-dependencies]
+crawler = [
+    "crawl4ai"
+]
 
 [tool.uv]
 [dependency-groups]

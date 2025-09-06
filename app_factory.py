@@ -74,7 +74,7 @@ def init_apps(app: AduibAIApp):
     log.info("middlewares initialized successfully")
 
 def init_fast_mcp(app: AduibAIApp):
-    global mcp
+    mcp=None
     if not config.DISCOVERY_SERVICE_ENABLED:
         from fast_mcp import FastMCP
         mcp = FastMCP(name=config.APP_NAME,instructions=config.APP_DESCRIPTION,version=config.APP_VERSION,auth_server_provider=ApiKeyAuthorizationServerProvider() if config.AUTH_ENABLED else None)
