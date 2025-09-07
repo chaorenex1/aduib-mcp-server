@@ -45,5 +45,6 @@ class NacosSettingsSource(RemoteSettingsSource):
         remote_configs = self.client.get_config_sync(self.data_id)
         if not remote_configs:
             self.client.publish_config_sync(self.data_id, json.dumps(self.configs, indent=4))
+            remote_configs = self.configs
         return remote_configs.get(field_name), field_name, False
 

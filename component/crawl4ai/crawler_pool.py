@@ -31,7 +31,6 @@ def install_browsers_if_needed():
         logger.error("Playwright CLI 未找到，请先安装 Python 包。")
 
 def init_crawler_env():
-    install_browsers_if_needed()
     from component.crawl4ai.config_loader.config_loader import ConfigLoader
     from libs import app_context
     app = app_context.get()
@@ -190,7 +189,9 @@ async def get_crawler(cfg: BrowserConfig) -> AsyncWebCrawler:
         raise MemoryError(f"RAM pressure – new browser denied: {e}")
     except Exception as e:
         traceback.print_exc()
-        raise RuntimeError(f"Failed to start browser: {e}")
+        install_browsers_if_needed()
+        logger.error(f"Failed to start browser, please check if the browser is installed properly: {e}")
+        # raise RuntimeError(f"Failed to start browser: {e}")
     finally:
         if sig in POOL:
             LAST_USED[sig] = time.time()

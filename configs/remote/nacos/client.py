@@ -2,14 +2,14 @@ import asyncio
 import json
 import logging
 from concurrent import futures
-from types import CoroutineType, FunctionType, MethodType
+from types import CoroutineType, FunctionType
 from typing import Callable, Any
 
 try:
     import nacos
     from v2.nacos import ClientConfigBuilder, GRPCConfig, NacosConfigService, NacosNamingService, ConfigParam, \
-    RegisterInstanceParam, DeregisterInstanceParam, ListInstanceParam, Instance, Service, GetServiceParam, \
-    SubscribeServiceParam
+        RegisterInstanceParam, DeregisterInstanceParam, ListInstanceParam, Instance, Service, GetServiceParam, \
+        SubscribeServiceParam
 except ImportError:
     nacos = None
     ClientConfigBuilder = None
@@ -28,6 +28,7 @@ logger = logging.getLogger(__name__)
 
 async_thread_pool = futures.ThreadPoolExecutor(thread_name_prefix='nacos_thread_pool')
 
+
 def run_async(func_or_coro, *args, **kwargs):
     """
         使用线程池在独立事件循环中运行协程任务，
@@ -41,13 +42,13 @@ def run_async(func_or_coro, *args, **kwargs):
             # 判断是协程对象还是函数
             if isinstance(func_or_coro, CoroutineType):
                 coro = func_or_coro
-            elif isinstance(func_or_coro, FunctionType) or isinstance(func_or_coro, MethodType):
+            elif isinstance(func_or_coro, FunctionType):
                 coro = func_or_coro(*args, **kwargs)
             else:
                 raise TypeError("func_or_coro must be an async function or coroutine object")
             return loop.run_until_complete(coro)
         finally:
-            ...
+            loop.close()
 
     # 在线程池中执行协程
     future = async_thread_pool.submit(run_in_thread)
@@ -60,7 +61,7 @@ class NacosClient:
                  user_name: str,
                  password: str,
                  group: str = "DEFAULT_GROUP",
-                 log_level: str = "INFO"):
+                 log_level: str = "DEBUG"):
         self.naming_service = None
         self.config_service = None
         self.server_addr = server_addr
@@ -80,10 +81,10 @@ class NacosClient:
                               .grpc_config(GRPCConfig(grpc_timeout=5000))
                               .build())
         self.client = nacos.NacosClient(server_addresses=server_addr, namespace=namespace, username=user_name,
-                                        password=password)
+                                        password=password,log_level=log_level)
         self.config_watcher = ConfigWatcher(self)
         self.name_service_watcher = NameInstanceWatcher(self)
-        self.config_callbacks: dict[str,list[Callable[[Any], None]]] = {}
+        self.config_callbacks: dict[str, list[Callable[[Any], None]]] = {}
         self.config_service: None
         self.naming_service: None
 
@@ -111,7 +112,8 @@ class NacosClient:
         return self.config_cache.get(data_id)
 
     def get_config_sync(self, data_id: str):
-        return run_async(self.get_config,data_id)
+        config = self.client.get_config(data_id=data_id, group=self.group)
+        return json.loads(config) if config else None
 
     async def register_config_listener(self, data_id: str):
         if self.config_service is None:
@@ -123,9 +125,9 @@ class NacosClient:
             logger.error(f"register_config_watcher error:{e}")
 
     def register_config_listener_sync(self, data_id: str):
-        return run_async(self.register_config_listener, data_id)
+        self.client.add_config_watcher(data_id=data_id, group=self.group, cb=self.config_watcher)
 
-    def add_config_callback(self,data_id: str, callback: Callable[[Any], None]):
+    def add_config_callback(self, data_id: str, callback: Callable[[Any], None]):
         if data_id not in self.config_callbacks:
             self.config_callbacks[data_id] = []
         if callback not in self.config_callbacks[data_id]:
@@ -138,7 +140,7 @@ class NacosClient:
         await self.config_service.publish_config(ConfigParam(data_id=data_id, group=self.group, content=data))
 
     def publish_config_sync(self, data_id: str, data: str):
-        return run_async(self.publish_config,data_id,data)
+        return self.client.publish_config(data_id=data_id, group=self.group, content=data)
 
     async def register_instance(self, service_name: str, ip: str, port: int, weight: int = 1, metadata=None):
         if metadata is None:
@@ -150,7 +152,8 @@ class NacosClient:
             RegisterInstanceParam(service_name=service_name, ip=ip, port=port, weight=weight, metadata=metadata))
 
     def register_instance_sync(self, service_name: str, ip: str, port: int, weight: int = 1, metadata=None):
-        return run_async(self.register_instance, service_name, ip, port, weight, metadata)
+        return self.client.add_naming_instance(service_name=service_name, ip=ip, port=port, weight=weight,
+                                              metadata=metadata)
 
     async def remove_instance(self, service_name: str, ip: str = None, port: int = None):
         if self.naming_service is None:
@@ -160,17 +163,17 @@ class NacosClient:
             DeregisterInstanceParam(service_name=service_name, ip=ip, port=port))
 
     def remove_instance_sync(self, service_name: str, ip: str = None, port: int = None):
-        return run_async(self.remove_instance, service_name, ip, port)
+        self.client.remove_naming_instance(service_name=service_name, ip=ip, port=port)
 
-    async def get_service(self, service_name: str)-> Service:
+    async def get_service(self, service_name: str) -> Service:
         if self.naming_service is None:
             await self.create_naming_service()
         return await self.naming_service.get_service(GetServiceParam(service_name=service_name, group_name=self.group))
 
-    def get_service_sync(self, service_name: str)-> Service:
-        return run_async(self.get_service, service_name)
+    def get_service_sync(self, service_name: str) -> Service:
+        return run_async(self.get_service(service_name))
 
-    async def list_instances(self, service_name: str)-> list[Instance]:
+    async def list_instances(self, service_name: str) -> list[Instance]:
         if self.naming_service is None:
             await self.create_naming_service()
         if service_name in self.config_cache:
@@ -180,32 +183,36 @@ class NacosClient:
         self.config_cache[service_name] = list
         return list
 
-    def list_instances_sync(self, service_name: str)-> list[Instance]:
-        return run_async(self.list_instances, service_name)
+    def list_instances_sync(self, service_name: str) -> list[Instance]:
+        return self.client.list_naming_instance(service_name=service_name,namespace_id=self.namespace, group_name=self.group, healthy_only=True)
 
-    async def subscribe(self,service_name: str):
+    async def subscribe(self, service_name: str):
         if self.naming_service is None:
             await self.create_naming_service()
-        await self.naming_service.subscribe(SubscribeServiceParam(service_name=service_name, group_name=self.group,subscribe_callback=self.name_service_watcher))
+        await self.naming_service.subscribe(SubscribeServiceParam(service_name=service_name, group_name=self.group,
+                                                                  subscribe_callback=self.name_service_watcher))
 
-    def subscribe_sync(self,service_name: str):
-        return run_async(self.subscribe, service_name)
+    def subscribe_sync(self, service_name: str):
+        self.client.subscribe(listener_fn=self.name_service_watcher)
 
-    async def unsubscribe(self,service_name: str):
+    async def unsubscribe(self, service_name: str):
         if self.naming_service is None:
             await self.create_naming_service()
-        await self.naming_service.unsubscribe(SubscribeServiceParam(service_name=service_name, group_name=self.group,subscribe_callback=self.name_service_watcher))
+        await self.naming_service.unsubscribe(SubscribeServiceParam(service_name=service_name, group_name=self.group,
+                                                                    subscribe_callback=self.name_service_watcher))
 
-    def unsubscribe_sync(self,service_name: str):
-        return run_async(self.unsubscribe, service_name)
+    def unsubscribe_sync(self, service_name: str):
+        self.client.unsubscribe(service_name=service_name, listener_name=self.name_service_watcher.__name__)
+
 
 class ConfigWatcher(Callable):
     __name__ = "ConfigWatcher"
+    listener_name=__name__
 
     def __init__(self, client: NacosClient):
         self.client = client
 
-    def __call__(self,tenant:str ,group: str, data_id: str, data: str):
+    def __call__(self, tenant: str, group: str, data_id: str, data: str):
         logger.debug(f"ConfigWatcher data_id:{data_id},group:{group},data:{data}")
         self.client.config_cache[data_id] = json.loads(data)
         if self.client.config_callbacks:

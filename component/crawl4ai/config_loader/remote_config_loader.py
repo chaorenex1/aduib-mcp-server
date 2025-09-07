@@ -1,3 +1,4 @@
+import asyncio
 import json
 from typing import Callable
 
@@ -14,7 +15,7 @@ class RemoteConfigLoader(ConfigLoader):
         if config_callback is None:
             config_callback = change_crawl_rule
         self.config_callback = config_callback
-        self.client.register_config_listener_sync(data_id)
+        asyncio.create_task(self.client.register_config_listener(data_id))
         self.client.add_config_callback(data_id,config_callback)
 
     def load(self) -> str:

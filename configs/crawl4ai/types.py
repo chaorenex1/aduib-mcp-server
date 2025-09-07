@@ -120,7 +120,7 @@ class CrawlRule(BaseModel):
                 return DefaultMarkdownGenerator(content_filter=BM25ContentFilter(user_query=query, use_stemming=False))
             case FilterType.LLM:
                 return DefaultMarkdownGenerator(content_filter=LLMContentFilter(
-                    llm_config=LLMConfig(provider=config.CRAWLER_LLM_MODEL,base_url=config.CRAWLER_LLM_BASE_URL,api_token=config.CRAWLER_API_KEY),
+                    llm_config=LLMConfig(provider="openai/"+config.CRAWLER_LLM_MODEL,base_url=config.CRAWLER_LLM_BASE_URL,api_token=config.CRAWLER_API_KEY,top_p=1.0,temperature=0.01),
                     # or use environment variable
                     instruction="""
                         Focus on extracting the core educational content.
@@ -135,7 +135,13 @@ class CrawlRule(BaseModel):
                         Format the output as clean markdown with proper code blocks and headers.
                         """,
                     chunk_token_threshold=4096,  # Adjust based on your needs
-                    verbose=True
+                    verbose=True,
+                    extra_args={
+                        "extra_headers": {
+                            "User-Agent": config.DEFAULT_USER_AGENT,
+                            "X-API-KEY": config.CRAWLER_API_KEY
+                        }
+                    }
                 )
                 )
             case _:

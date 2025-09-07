@@ -1,5 +1,4 @@
 import asyncio
-from multiprocessing.spawn import freeze_support
 
 from app_factory import create_app, init_crawler_pool
 from libs import mcp_context, app_context
@@ -40,5 +39,4 @@ async def run_mcp_server(**kwargs):
 
 
 if __name__ == '__main__':
-    freeze_support()
     asyncio.run(run_mcp_server())
