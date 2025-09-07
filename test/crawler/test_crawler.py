@@ -13,7 +13,7 @@ def test_create_crawl_job():
     print(task_id)
 
 def test_query_crawl_job_status():
-    task_id = "crawl_e0ae0d9e"  # Replace with a valid task_id obtained from
+    task_id = "crawl_ad80689d"  # Replace with a valid task_id obtained from
     # Check the status of the crawl job
     response = requests.get(f"http://localhost:5002/v1/crawl/job/{task_id}")
     assert response.status_code == 200

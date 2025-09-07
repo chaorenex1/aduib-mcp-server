@@ -15,7 +15,7 @@ from patchright.async_api import BrowserContext, Page
 from configs import config
 from configs.crawl4ai.crawl_rule import CrawlRules
 from configs.crawl4ai.types import CrawlRuleGroup, CrawlRule
-from utils import jsonable_encoder, get_domain_url
+from utils import get_domain_url
 
 POOL: Dict[str, AsyncWebCrawler] = {}
 LAST_USED: Dict[str, float] = {}
@@ -141,13 +141,14 @@ async def before_return_html(
     return page
 
 def _sig(cfg: BrowserConfig) -> str:
-    payload = json.dumps(jsonable_encoder(obj=cfg), sort_keys=True, separators=(",",":"))
+    payload = json.dumps(cfg.dump(), sort_keys=True, separators=(",",":"))
     return hashlib.sha1(payload.encode()).hexdigest()
 
 async def get_crawler(cfg: BrowserConfig) -> AsyncWebCrawler:
     sig=None
     try:
         sig = _sig(cfg)
+        logger.debug(f"Getting crawler with signature: {sig}")
         crawler_logger = AsyncLogger()
         async with LOCK:
             if sig in POOL:

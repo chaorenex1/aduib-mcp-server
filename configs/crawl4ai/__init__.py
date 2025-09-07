@@ -2,7 +2,7 @@ from pydantic_settings import BaseSettings
 
 class Crawl4AIConfig(BaseSettings):
     MEMORY_THRESHOLD_PRECENT: float = 80.0  # 80% of memory usage
-    IDLE_TTL_SEC: int = 1800  # 30 minutes
+    IDLE_TTL_SEC: int = 60  # 30 minutes
     RATE_LIMITER_ENABLED: bool = True
     RATE_LIMITER_BASE_DELAY: tuple= (1.0, 3.0)  # seconds
     CRAWLER_MAX_PAGES: int = 30

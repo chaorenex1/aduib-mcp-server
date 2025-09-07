@@ -2,7 +2,7 @@ import asyncio
 import json
 import logging
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 from functools import partial
 from typing import List, Dict, Any
 from typing import Optional, AsyncGenerator
@@ -304,6 +304,7 @@ class Crawl4AIService:
                     "status": TaskStatus.COMPLETED,
                     "result": json.dumps(result),
                 })
+                redis.expire(f"aduib_task:{task_id}", timedelta(days=7))
                 await asyncio.sleep(5)  # Give Redis time to process the update
             except Exception as exc:
                 redis.hset(f"aduib_task:{task_id}", mapping={
