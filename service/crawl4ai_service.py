@@ -94,7 +94,8 @@ class Crawl4AIService:
         return response
 
     @classmethod
-    async def stream_results(cls,crawl_rule: CrawlRule | None, results_gen: AsyncGenerator) -> AsyncGenerator[bytes, None]:
+    async def stream_results(cls, crawl_rule: CrawlRule | None, results_gen: AsyncGenerator) -> AsyncGenerator[
+        str, None]:
         """Stream results with heartbeats and completion markers."""
         import json
         def datetime_handler(x):
@@ -109,14 +110,12 @@ class Crawl4AIService:
                     result_dict = result.model_dump()
                     result_dict['server_memory_mb'] = server_memory_mb
                     logger.info(f"Streaming result for {result_dict.get('url', 'unknown')}")
-                    data = json.dumps(cls.create_processed_result(crawl_rule,result), default=datetime_handler) + "\n"
-                    yield data.encode('utf-8')
+                    data = json.dumps(cls.create_processed_result(crawl_rule, result), default=datetime_handler) + "\n"
+                    yield data
                 except Exception as e:
                     logger.error(f"Serialization error: {e}")
                     error_response = {"error": str(e), "url": getattr(result, 'url', 'unknown')}
-                    yield (json.dumps(error_response) + "\n").encode('utf-8')
-
-            yield json.dumps({"status": "completed"}).encode('utf-8')
+                    yield json.dumps(error_response) + "\n"
 
         except asyncio.CancelledError:
             logger.warning("Client disconnected during streaming")
@@ -134,8 +133,9 @@ class Crawl4AIService:
             browser_config: dict,
             crawler_config: dict,
             query: list[str] | str = None,
-            stream: bool = False
-    ) -> None | AsyncGenerator[bytes, None] | dict[str, bool | list[Any] | float | None | int]:
+            stream: bool = False,
+            notify_url: str = None
+    ) -> None | AsyncGenerator[str, None] | dict[str, bool | list[Any] | float | None | int]:
         """Handle non-streaming crawl requests."""
         start_mem_mb = cls._get_memory_mb()  # <--- Get memory before
         start_time = time.time()
@@ -148,7 +148,7 @@ class Crawl4AIService:
             browser_config = BrowserConfig.load(browser_config)
             crawler_config = CrawlerRunConfig.load(crawler_config)
             crawler_config.cache_mode = CacheMode.BYPASS
-            crawler_config.stream=stream
+            crawler_config.stream = stream
 
             from configs.crawl4ai.crawl_rule import CrawlRules
             crawl_rule = get_rule_by_url(urls[0])
@@ -161,7 +161,7 @@ class Crawl4AIService:
             crawler_config.markdown_generator = markdown_generator
 
             deep_crawl_strategy = crawl_rule.build_deep_crawl_strategy(query=query)
-            crawler_config.deep_crawl_strategy=deep_crawl_strategy
+            crawler_config.deep_crawl_strategy = deep_crawl_strategy
 
             dispatcher = MemoryAdaptiveDispatcher(
                 memory_threshold_percent=config.MEMORY_THRESHOLD_PRECENT,
@@ -172,7 +172,7 @@ class Crawl4AIService:
 
             from component.crawl4ai.crawler_pool import get_crawler
             crawler = await get_crawler(browser_config)
-            if crawl_rule.crawl_mode==CrawlMode.CLASSIC:
+            if crawl_rule.crawl_mode == CrawlMode.CLASSIC:
                 results = []
                 func = getattr(crawler, "arun" if len(urls) == 1 else "arun_many")
                 partial_func = partial(func,
@@ -193,20 +193,23 @@ class Crawl4AIService:
                     f"Memory usage: Start: {start_mem_mb} MB, End: {end_mem_mb} MB, Delta: {mem_delta_mb} MB, Peak: {peak_mem_mb} MB")
 
                 # Process results to handle PDF bytes
-                processed_results=[]
+                processed_results = []
                 if not isinstance(results, AsyncGenerator):
                     for result in results:
                         processed_results.append(await cls.create_processed_result(crawl_rule, result))
+                    return {
+                        "success": True,
+                        "results": processed_results,
+                        "server_processing_time_s": end_time - start_time,
+                        "server_memory_delta_mb": mem_delta_mb,
+                        "server_peak_memory_mb": peak_mem_mb
+                    }
                 else:
-                    return cls.stream_results(crawl_rule=crawl_rule,results_gen=results)
-                return {
-                    "success": True,
-                    "results": processed_results,
-                    "server_processing_time_s": end_time - start_time,
-                    "server_memory_delta_mb": mem_delta_mb,
-                    "server_peak_memory_mb": peak_mem_mb
-                }
+                    stream_results = cls.stream_results(crawl_rule=crawl_rule, results_gen=results)
+
+                    return stream_results
             else:  # Adaptive crawl
+
                 adaptive_crawler = crawl_rule.build_adaptive_crawler(crawler)
                 processed_results = []
                 for url in urls:
@@ -252,20 +255,22 @@ class Crawl4AIService:
     @classmethod
     async def create_processed_result(cls, crawl_rule: CrawlRule | None, result) -> Any:
         result_dict = result.model_dump()
+        data = None
         if crawl_rule.crawler_result_type == CrawlResultType.MARKDOWN:
             if result_dict.get('markdown') is not None and result_dict.get('markdown').get('fit_markdown') is not None:
-                return result_dict['markdown']['fit_markdown']
-            elif result_dict.get('markdown') is not None and result_dict.get('markdown').get('raw_markdown') is not None:
-                return result_dict['markdown']['raw_markdown']
+                data = result_dict['markdown']['fit_markdown']
+            elif result_dict.get('markdown') is not None and result_dict.get('markdown').get(
+                    'raw_markdown') is not None:
+                data = result_dict['markdown']['raw_markdown']
         elif crawl_rule.crawler_result_type == CrawlResultType.PDF:
             if result_dict.get('pdf') is not None:
-                return result_dict['pdf']
+                data = result_dict['pdf']
         else:  # HTML
             if result_dict.get('cleaned_html') is not None:
-                return result_dict['cleaned_html']
+                data = result_dict['cleaned_html']
             else:
-                return result_dict.get('fit_html')
-        return None
+                data = result_dict.get('fit_html')
+        return data, result_dict.get('screenshot', '')
 
     @classmethod
     async def handle_crawl_job(
@@ -275,8 +280,9 @@ class Crawl4AIService:
             browser_config: Dict,
             crawler_config: Dict,
             query: list[str] | str = None,
-            stream: bool = False
-    ) -> Dict | AsyncGenerator[dict, None]:
+            stream: bool = False,
+            notify_url: str = None
+    ) -> Any:
         """
         Fire-and-forget version of handle_crawl_request.
         Creates a aduib_task in Redis, runs the heavy work in a background aduib_task,
@@ -293,18 +299,22 @@ class Crawl4AIService:
 
         async def _runner():
             try:
+                from service.notify import CrawlResultNotifyHandler
+                notify_handler = CrawlResultNotifyHandler(urls) if notify_url else None
                 result = await cls.handle_crawl_request(
                     urls=urls,
                     browser_config=browser_config,
                     crawler_config=crawler_config,
                     query=query,
-                    stream=stream
+                    stream=stream,
+                    notify_url=notify_url
                 )
                 redis.hset(f"aduib_task:{task_id}", mapping={
                     "status": TaskStatus.COMPLETED,
                     "result": json.dumps(result),
                 })
                 redis.expire(f"aduib_task:{task_id}", timedelta(days=7))
+                await notify_handler.notify(result)
                 await asyncio.sleep(5)  # Give Redis time to process the update
             except Exception as exc:
                 redis.hset(f"aduib_task:{task_id}", mapping={

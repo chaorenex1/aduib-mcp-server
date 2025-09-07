@@ -9,3 +9,4 @@ class CrawlJobPayload(BaseModel):
     crawler_config: Dict = {}
     query: list[str] | str = None
     stream: bool = False
+    notify_url: HttpUrl = None
