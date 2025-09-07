@@ -13,11 +13,14 @@ from crawl4ai.async_crawler_strategy import AsyncPlaywrightCrawlerStrategy
 from patchright.async_api import BrowserContext, Page
 
 from configs import config
-from utils import jsonable_encoder
+from configs.crawl4ai.crawl_rule import CrawlRules
+from configs.crawl4ai.types import CrawlRuleGroup, CrawlRule
+from utils import jsonable_encoder, get_domain_url
 
 POOL: Dict[str, AsyncWebCrawler] = {}
 LAST_USED: Dict[str, float] = {}
 LOCK = asyncio.Lock()
+CRAWL_RULES:list[CrawlRuleGroup]=[]
 
 logger=logging.getLogger(__name__)
 
@@ -26,6 +29,44 @@ def install_browsers_if_needed():
         subprocess.check_call(["playwright", "install", "--with-deps"])
     except FileNotFoundError:
         logger.error("Playwright CLI 未找到，请先安装 Python 包。")
+
+def init_crawler_env():
+    install_browsers_if_needed()
+    from component.crawl4ai.config_loader.config_loader import ConfigLoader
+    from libs import app_context
+    app = app_context.get()
+    try:
+        data_dict = ConfigLoader.get_config_loader(config.CRAWLER_CONFIG_PATH, app.app_home).load()
+    except Exception:
+        data_dict = None
+    if data_dict is None:
+        for r in CrawlRules().crawl_rules:
+            CRAWL_RULES.append(CrawlRuleGroup.model_validate(r))
+    else:
+        for r in json.loads(data_dict):
+            try:
+                CRAWL_RULES.append(CrawlRuleGroup.model_validate(r))
+            except Exception as e:
+                logger.error(f"Invalid crawl rule config: {r}, error: {e}")
+
+def get_rule_by_url(url:str)->CrawlRule |None:
+    """Get crawl rule by matching domain name from URL."""
+    for group in CRAWL_RULES:
+        for rule in group.rules:
+            if rule.url == get_domain_url(url):
+                return rule
+    return None
+
+def change_crawl_rule(new_rules:list[dict]):
+    """Change the current crawl rules to new ones."""
+    global CRAWL_RULES
+    CRAWL_RULES.clear()
+    for r in new_rules:
+        try:
+            CRAWL_RULES.append(CrawlRuleGroup.model_validate(r))
+        except Exception as e:
+            logger.error(f"Invalid crawl rule config: {r}, error: {e}")
+
 
 async def on_browser_created(browser, **kwargs):
     # Called once the browser instance is created (but no pages or contexts yet)
@@ -105,7 +146,6 @@ def _sig(cfg: BrowserConfig) -> str:
     return hashlib.sha1(payload.encode()).hexdigest()
 
 async def get_crawler(cfg: BrowserConfig) -> AsyncWebCrawler:
-    install_browsers_if_needed()
     sig=None
     try:
         sig = _sig(cfg)

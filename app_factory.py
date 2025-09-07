@@ -40,7 +40,7 @@ def create_app_with_configs()->AduibAIApp:
     if config.APP_HOME:
         app.app_home = config.APP_HOME
     else:
-        app.app_home = os.getcwd()
+        app.app_home = os.getenv("user.home", str(pathlib.Path.home())) + f"/.{config.APP_NAME.lower()}"
     app.include_router(api_router)
     if config.AUTH_ENABLED:
         app.add_middleware(ApiKeyContextMiddleware)
@@ -93,6 +93,8 @@ def init_crawler_pool(app: AduibAIApp):
         StaticFiles(directory=STATIC_DIR, html=True),
         name="play",
     )
+    from component.crawl4ai.crawler_pool import init_crawler_env
+    init_crawler_env()
 
 
 @contextlib.asynccontextmanager

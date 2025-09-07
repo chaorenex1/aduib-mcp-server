@@ -10,3 +10,4 @@ class Crawl4AIConfig(BaseSettings):
     CRAWLER_LLM_MODEL: str = "gpt-3.5-turbo"
     CRAWLER_EMBEDDING_MODEL: str = "text-embedding-3-small"
     CRAWLER_API_KEY: str = ""
+    CRAWLER_CONFIG_PATH: str = "nacos://crawl4ai-crawl_rules.json"

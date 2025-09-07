@@ -21,6 +21,7 @@ from fastapi.background import BackgroundTasks
 from fastapi.responses import JSONResponse
 
 from component.cache.redis_cache import redis_client as redis
+from component.crawl4ai.crawler_pool import get_rule_by_url
 from configs import config
 from configs.crawl4ai.types import TaskStatus, CrawlRule, CrawlMode, CrawlResultType
 from utils import jsonable_encoder
@@ -150,7 +151,7 @@ class Crawl4AIService:
             crawler_config.stream=stream
 
             from configs.crawl4ai.crawl_rule import CrawlRules
-            crawl_rule = CrawlRules.get_rule_by_url(urls[0])
+            crawl_rule = get_rule_by_url(urls[0])
             logger.debug(f"Matched crawl rule: {crawl_rule}")
 
             if crawl_rule.css_selector:

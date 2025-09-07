@@ -3,7 +3,7 @@ import json
 import logging
 from concurrent import futures
 from types import CoroutineType, FunctionType
-from typing import Callable
+from typing import Callable, Any
 
 try:
     import nacos
@@ -82,6 +82,8 @@ class NacosClient:
         self.client = nacos.NacosClient(server_addresses=server_addr, namespace=namespace, username=user_name,
                                         password=password)
         self.config_watcher = ConfigWatcher(self)
+        self.name_service_watcher = NameInstanceWatcher(self)
+        self.config_callbacks: dict[str,list[Callable[[Any], None]]] = {}
         self.config_service: None
         self.naming_service: None
 
@@ -122,6 +124,12 @@ class NacosClient:
 
     def register_config_listener_sync(self, data_id: str):
         return run_async(self.register_config_listener(data_id))
+
+    def add_config_callback(self,data_id: str, callback: Callable[[Any], None]):
+        if data_id not in self.config_callbacks:
+            self.config_callbacks[data_id] = []
+        if callback not in self.config_callbacks[data_id]:
+            self.config_callbacks[data_id].append(callback)
 
     async def publish_config(self, data_id: str, data: str):
         logger.debug(f"publish_config:{data_id},{data}")
@@ -178,7 +186,7 @@ class NacosClient:
     async def subscribe(self,service_name: str):
         if self.naming_service is None:
             await self.create_naming_service()
-        await self.naming_service.subscribe(SubscribeServiceParam(service_name=service_name, group_name=self.group,subscribe_callback=NameInstanceWatcher))
+        await self.naming_service.subscribe(SubscribeServiceParam(service_name=service_name, group_name=self.group,subscribe_callback=self.name_service_watcher))
 
     def subscribe_sync(self,service_name: str):
         return run_async(self.subscribe, service_name)
@@ -186,7 +194,7 @@ class NacosClient:
     async def unsubscribe(self,service_name: str):
         if self.naming_service is None:
             await self.create_naming_service()
-        await self.naming_service.unsubscribe(SubscribeServiceParam(service_name=service_name, group_name=self.group,subscribe_callback=NameInstanceWatcher))
+        await self.naming_service.unsubscribe(SubscribeServiceParam(service_name=service_name, group_name=self.group,subscribe_callback=self.name_service_watcher))
 
     def unsubscribe_sync(self,service_name: str):
         return run_async(self.unsubscribe, service_name)
@@ -197,9 +205,16 @@ class ConfigWatcher(Callable):
     def __init__(self, client: NacosClient):
         self.client = client
 
-    def __call__(self, data_id: str, group: str, data: str):
-        logger.info(f"ConfigWatcher data_id:{data_id},group:{group},data:{data}")
+    def __call__(self,tenant:str ,group: str, data_id: str, data: str):
+        logger.debug(f"ConfigWatcher data_id:{data_id},group:{group},data:{data}")
         self.client.config_cache[data_id] = json.loads(data)
+        if self.client.config_callbacks:
+            callbacks = self.client.config_callbacks.get(data_id, [])
+            for callback in callbacks:
+                try:
+                    callback(self.client.config_cache[data_id])
+                except Exception as e:
+                    logger.error(f"ConfigWatcher callback error:{e}")
 
 
 class NameInstanceWatcher(Callable):
