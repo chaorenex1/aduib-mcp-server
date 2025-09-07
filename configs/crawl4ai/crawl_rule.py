@@ -2,7 +2,7 @@ from typing import Any
 
 from pydantic_settings import BaseSettings
 
-from controllers.crawl4ai.types import CrawlRuleGroup, CrawlRule
+from configs.crawl4ai.types import CrawlRuleGroup, CrawlRule
 from utils import get_domain_url
 
 browser_config={
@@ -29,7 +29,7 @@ browser_config={
 
 crawler_config={
     "check_robots_txt":True,
-    "screenshot":False,
+    "screenshot":True,
     "screenshot_wait_for":5.0,
     "locale":"zh-CN",
     "timezone_id":"Asia/Shanghai",
@@ -56,14 +56,14 @@ class CrawlRules(BaseSettings):
                 "url": "www.cnblogs.com",
                 "crawl_mode": "classic",
                 "crawl_result_type": "markdown",
-                "filter_type":"bm25"
+                "filter_type":"fit",
             },
             {
                 "name": "csdn",
                 "url": "blog.csdn.net",
                 "crawl_mode": "classic",
                 "crawl_result_type": "markdown",
-                "filter_type":"llm"
+                "filter_type":"fit"
             }
         ]
     }, {

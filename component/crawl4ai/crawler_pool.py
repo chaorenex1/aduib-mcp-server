@@ -2,13 +2,13 @@ import asyncio
 import hashlib
 import json
 import logging
-import psutil
 import subprocess
 import time
 import traceback
 from typing import Dict
 
-from crawl4ai import AsyncWebCrawler, BrowserConfig, UndetectedAdapter
+import psutil
+from crawl4ai import AsyncWebCrawler, BrowserConfig, UndetectedAdapter, AsyncLogger
 from crawl4ai.async_crawler_strategy import AsyncPlaywrightCrawlerStrategy
 from patchright.async_api import BrowserContext, Page
 
@@ -37,10 +37,9 @@ async def on_page_context_created(page: Page, context: BrowserContext, **kwargs)
     # Called right after a new page + context are created (ideal for auth or route config).
     logger.debug("[HOOK] on_page_context_created - Setting up page & context.")
 
-    from configs.crawl4ai.js import load_js_script
-    await context.add_init_script(script=load_js_script("auto_toggle"))
-    await context.add_init_script(script=load_js_script("auto_toggle2"))
-    await context.add_init_script(script=load_js_script("auto_toggle3"))
+    # await context.add_init_script(script=load_js_script("auto_toggle"))
+    # await context.add_init_script(script=load_js_script("auto_toggle2"))
+    # await context.add_init_script(script=load_js_script("auto_toggle3"))
     return page
 
 async def before_goto(
@@ -110,6 +109,7 @@ async def get_crawler(cfg: BrowserConfig) -> AsyncWebCrawler:
     sig=None
     try:
         sig = _sig(cfg)
+        crawler_logger = AsyncLogger()
         async with LOCK:
             if sig in POOL:
                 LAST_USED[sig] = time.time();
@@ -122,6 +122,7 @@ async def get_crawler(cfg: BrowserConfig) -> AsyncWebCrawler:
                 crawler_strategy = AsyncPlaywrightCrawlerStrategy(
                     browser_config=cfg,
                     browser_adapter=undetected_adapter if not cfg.enable_stealth else None,
+                    logger=crawler_logger
                 )
                 crawler_strategy.set_hook("on_browser_created", on_browser_created)
                 crawler_strategy.set_hook(
@@ -141,7 +142,7 @@ async def get_crawler(cfg: BrowserConfig) -> AsyncWebCrawler:
                 crawler_strategy.set_hook(
                     "before_return_html", before_return_html
                 )
-            crawler = AsyncWebCrawler(config=cfg, thread_safe=False,crawler_strategy=crawler_strategy)
+            crawler = AsyncWebCrawler(config=cfg, thread_safe=False,crawler_strategy=crawler_strategy,logger=crawler_logger)
             await crawler.start()
             POOL[sig] = crawler; LAST_USED[sig] = time.time()
             return crawler

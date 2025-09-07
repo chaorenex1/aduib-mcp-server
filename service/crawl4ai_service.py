@@ -2,7 +2,6 @@ import asyncio
 import json
 import logging
 import time
-from base64 import b64encode
 from datetime import datetime
 from functools import partial
 from typing import List, Dict, Any
@@ -23,7 +22,7 @@ from fastapi.responses import JSONResponse
 
 from component.cache.redis_cache import redis_client as redis
 from configs import config
-from controllers.crawl4ai.types import TaskStatus, CrawlRule, CrawlMode, CrawlResultType
+from configs.crawl4ai.types import TaskStatus, CrawlRule, CrawlMode, CrawlResultType
 from utils import jsonable_encoder
 
 logger = logging.getLogger(__name__)
@@ -153,6 +152,10 @@ class Crawl4AIService:
             from configs.crawl4ai.crawl_rule import CrawlRules
             crawl_rule = CrawlRules.get_rule_by_url(urls[0])
             logger.debug(f"Matched crawl rule: {crawl_rule}")
+
+            if crawl_rule.css_selector:
+                crawler_config.css_selector = crawl_rule.css_selector
+
             markdown_generator = CrawlRule.build_markdown_generator(crawl_rule)
             crawler_config.markdown_generator = markdown_generator
 
@@ -248,21 +251,19 @@ class Crawl4AIService:
     @classmethod
     async def create_processed_result(cls, crawl_rule: CrawlRule | None, result) -> Any:
         result_dict = result.model_dump()
-        logger.info(f"Result html: {result_dict['html']}")
-        logger.info(f"Result cleaned_html: {result_dict['cleaned_html']}")
-        logger.info(f"Result markdown: {result_dict['markdown']}")
-        logger.info(f"Result fit markdown: {result_dict['fit_markdown']}")
-        # If PDF exists, encode it to base64
-
         if crawl_rule.crawler_result_type == CrawlResultType.MARKDOWN:
-            if result_dict.get('fit_markdown') is not None:
-                return b64encode(result_dict['fit_markdown']).decode('utf-8')
+            if result_dict.get('markdown') is not None and result_dict.get('markdown').get('fit_markdown') is not None:
+                return result_dict['markdown']['fit_markdown']
+            elif result_dict.get('markdown') is not None and result_dict.get('markdown').get('raw_markdown') is not None:
+                return result_dict['markdown']['raw_markdown']
         elif crawl_rule.crawler_result_type == CrawlResultType.PDF:
             if result_dict.get('pdf') is not None:
-                return b64encode(result_dict['pdf']).decode('utf-8')
+                return result_dict['pdf']
         else:  # HTML
             if result_dict.get('cleaned_html') is not None:
-                return b64encode(result_dict['cleaned_html']).decode('utf-8')
+                return result_dict['cleaned_html']
+            else:
+                return result_dict.get('fit_html')
         return None
 
     @classmethod

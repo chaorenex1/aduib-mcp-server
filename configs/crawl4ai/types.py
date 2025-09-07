@@ -82,11 +82,11 @@ class CrawlRule(BaseModel):
     url: str
     crawl_mode: CrawlMode = CrawlMode.CLASSIC
     adaptive_crawl_method: str = "statistical"  # 'statistical' or 'embedding'
-    crawler_result_type: CrawlResultType = CrawlResultType.HTML
+    crawler_result_type: CrawlResultType = CrawlResultType.MARKDOWN
     css_selector: str = None
-    filter_type: FilterType = FilterType.FIT
+    filter_type: FilterType = FilterType.RAW
     deep_crawl: bool = False
-    deep_crawl_method: str = "seo"  # 'seo' or 'keyword' or 'relevance'
+    deep_crawl_method: str = None  # 'seo' or 'keyword' or 'relevance'
     deep_crawl_max_depth: int = 2
     deep_crawl_threshold: float = 0.7
 
