@@ -2,7 +2,7 @@ import asyncio
 import json
 import logging
 from concurrent import futures
-from types import CoroutineType, FunctionType
+from types import CoroutineType, FunctionType, MethodType
 from typing import Callable, Any
 
 try:
@@ -41,13 +41,13 @@ def run_async(func_or_coro, *args, **kwargs):
             # 判断是协程对象还是函数
             if isinstance(func_or_coro, CoroutineType):
                 coro = func_or_coro
-            elif isinstance(func_or_coro, FunctionType):
+            elif isinstance(func_or_coro, FunctionType) or isinstance(func_or_coro, MethodType):
                 coro = func_or_coro(*args, **kwargs)
             else:
                 raise TypeError("func_or_coro must be an async function or coroutine object")
             return loop.run_until_complete(coro)
         finally:
-            loop.close()
+            ...
 
     # 在线程池中执行协程
     future = async_thread_pool.submit(run_in_thread)
@@ -111,7 +111,7 @@ class NacosClient:
         return self.config_cache.get(data_id)
 
     def get_config_sync(self, data_id: str):
-        return run_async(self.get_config(data_id))
+        return run_async(self.get_config,data_id)
 
     async def register_config_listener(self, data_id: str):
         if self.config_service is None:
@@ -123,7 +123,7 @@ class NacosClient:
             logger.error(f"register_config_watcher error:{e}")
 
     def register_config_listener_sync(self, data_id: str):
-        return run_async(self.register_config_listener(data_id))
+        return run_async(self.register_config_listener, data_id)
 
     def add_config_callback(self,data_id: str, callback: Callable[[Any], None]):
         if data_id not in self.config_callbacks:
@@ -138,7 +138,7 @@ class NacosClient:
         await self.config_service.publish_config(ConfigParam(data_id=data_id, group=self.group, content=data))
 
     def publish_config_sync(self, data_id: str, data: str):
-        return run_async(self.publish_config(data_id, data))
+        return run_async(self.publish_config,data_id,data)
 
     async def register_instance(self, service_name: str, ip: str, port: int, weight: int = 1, metadata=None):
         if metadata is None:
