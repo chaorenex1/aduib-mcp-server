@@ -2,10 +2,11 @@ from typing import TypedDict
 
 from mcp import ServerSession
 
-from app_factory import app_context
 from fast_mcp import Context
+from libs import mcp_context
 
-mcp= app_context.get().mcp
+mcp= mcp_context.get()
+
 
 
 @mcp.tool()

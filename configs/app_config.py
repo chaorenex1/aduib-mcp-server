@@ -5,6 +5,7 @@ from pydantic.fields import FieldInfo
 from pydantic_settings import SettingsConfigDict, BaseSettings, PydanticBaseSettingsSource
 
 from .cache.redis_config import RedisConfig
+from .crawl4ai import Crawl4AIConfig
 from .db import DBConfig
 from .deploy import DeploymentConfig, AuthConfig, MCPConfig
 from .logging import LoggingConfig
@@ -58,8 +59,9 @@ class AduibAiConfig(
     LoggingConfig,
     DBConfig,
     RedisConfig,
+    Crawl4AIConfig,
     RemoteSettingsSourceConfig,
-    DiscoveryConfig
+    DiscoveryConfig,
 ):
     model_config = SettingsConfigDict(
         # Use top level .env file (one level above ./aduib_ai/)

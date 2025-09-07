@@ -1,7 +1,8 @@
 import asyncio
 from multiprocessing.spawn import freeze_support
 
-from app_factory import create_app, app_context, init_fast_mcp, run_mcp_server
+from app_factory import create_app, init_crawler_pool
+from libs import mcp_context, app_context
 
 """
 Main entry point for the AduibAI application.
@@ -21,14 +22,23 @@ app=None
 if not app_context.get():
     app=create_app()
 
-async def run_app(**kwargs):
-    init_fast_mcp(app)
+
+async def run_mcp_server(**kwargs):
+    """Run the MCP server."""
+    from mcp_factory import MCPFactory
     import uvicorn
+
+    mcp_factory = MCPFactory.get_mcp_factory()
+    mcp = mcp_factory.get_mcp()
+    mcp_context.set(mcp)
+    app.mcp = mcp
+    app_context.set(app)
+    init_crawler_pool(app)
+    mcp_factory.mount_mcp_app(app)
     config = uvicorn.Config(app=app, host=app.config.APP_HOST, port=app.config.APP_PORT, **kwargs)
-    run_mcp_server(app)
     await uvicorn.Server(config).serve()
 
 
 if __name__ == '__main__':
     freeze_support()
-    asyncio.run(run_app())
+    asyncio.run(run_mcp_server())

@@ -1,31 +1,30 @@
+import asyncio
 import contextlib
 import logging
 import os
+import pathlib
 import time
-from contextvars import ContextVar
 from typing import AsyncIterator
 
 from fastapi.routing import APIRoute
+from starlette.staticfiles import StaticFiles
 
 from aduib_app import AduibAIApp
 from component.cache.redis_cache import init_cache
 from component.log.app_logging import init_logging
 from configs import config
 from controllers.route import api_router
-from libs.api_key_auth import ApiKeyAuthorizationServerProvider
 from libs.context import LoggingMiddleware, TraceIdContextMiddleware, ApiKeyContextMiddleware
-from libs.contextVar_wrapper import ContextVarWrappers
-from mcp_service import load_mcp_plugins
 
 log=logging.getLogger(__name__)
-
-app_context: ContextVarWrappers[AduibAIApp]=ContextVarWrappers(ContextVar("app_context"))
 
 
 def create_app_with_configs()->AduibAIApp:
     """ Create the FastAPI app with necessary configurations and middlewares.
     :return: AduibAIApp instance
     """
+
+    from libs import app_context
     if app_context.get():
         return app_context.get()
     def custom_generate_unique_id(route: APIRoute) -> str:
@@ -35,7 +34,7 @@ def create_app_with_configs()->AduibAIApp:
         title=config.APP_NAME,
         generate_unique_id_function=custom_generate_unique_id,
         debug=config.DEBUG,
-        lifespan=lifespan if config.TRANSPORT_TYPE == "streamable-http" else None,
+        lifespan=lifespan,
     )
     app.config=config
     if config.APP_HOME:
@@ -73,48 +72,52 @@ def init_apps(app: AduibAIApp):
     init_cache(app)
     log.info("middlewares initialized successfully")
 
-def init_fast_mcp(app: AduibAIApp):
-    mcp=None
-    if not config.DISCOVERY_SERVICE_ENABLED:
-        from fast_mcp import FastMCP
-        mcp = FastMCP(name=config.APP_NAME,instructions=config.APP_DESCRIPTION,version=config.APP_VERSION,auth_server_provider=ApiKeyAuthorizationServerProvider() if config.AUTH_ENABLED else None)
-    else:
-        if config.DISCOVERY_SERVICE_TYPE=="nacos":
-            from nacos_mcp_wrapper.server.nacos_settings import NacosSettings
-            nacos_settings = NacosSettings(
-                SERVER_ADDR=config.NACOS_SERVER_ADDR,
-                NAMESPACE=config.NACOS_NAMESPACE,
-                USERNAME=config.NACOS_USERNAME,
-                PASSWORD=config.NACOS_PASSWORD,
-                SERVICE_GROUP=config.NACOS_GROUP,
-                SERVICE_PORT=config.APP_PORT,
-                SERVICE_NAME=config.APP_NAME,
-                APP_CONN_LABELS={"version": config.APP_VERSION} if config.APP_VERSION else None,
-                SERVICE_META_DATA={"transport": config.TRANSPORT_TYPE},
-            )
-            from nacos_mcp import NacosMCP
-            mcp = NacosMCP(name=config.APP_NAME,
-                           nacos_settings=nacos_settings,
-                           instructions=config.APP_DESCRIPTION,
-                           version=config.APP_VERSION,
-                           auth_server_provider=ApiKeyAuthorizationServerProvider() if config.AUTH_ENABLED else None)
-    app.mcp = mcp
-    load_mcp_plugins("mcp_service")
-    log.info("fast mcp initialized successfully")
+def init_crawler_pool(app: AduibAIApp):
+    MAX_PAGES = config.CRAWLER_MAX_PAGES
+    GLOBAL_SEM = asyncio.Semaphore(MAX_PAGES)
+    from crawl4ai import AsyncWebCrawler
+    orig_arun = AsyncWebCrawler.arun
 
-def run_mcp_server(app):
-    if config.TRANSPORT_TYPE == "stdio":
-        app.mcp.run(transport=config.TRANSPORT_TYPE)
-    elif config.TRANSPORT_TYPE == "sse":
-        app.mount("/", app.mcp.sse_app(), name="mcp_see")
-    elif config.TRANSPORT_TYPE == "streamable-http":
-        app.mount("/", app.mcp.streamable_http_app(), name="mcp_streamable_http")
+    async def capped_arun(self, *a, **kw):
+        async with GLOBAL_SEM:
+            return await orig_arun(self, *a, **kw)
+
+    AsyncWebCrawler.arun = capped_arun
+
+    # ── static playground ──────────────────────────────────────
+    STATIC_DIR = pathlib.Path(__file__).parent / "static" / "playground"
+    if not STATIC_DIR.exists():
+        raise RuntimeError(f"Playground assets not found at {STATIC_DIR}")
+    app.mount(
+        "/playground",
+        StaticFiles(directory=STATIC_DIR, html=True),
+        name="play",
+    )
 
 
 @contextlib.asynccontextmanager
 async def lifespan(app: AduibAIApp) -> AsyncIterator[None]:
     log.info("Lifespan is starting")
-    session_manager = app.mcp.session_manager
+    from configs.crawl4ai.crawl_rule import browser_config
+    from component.crawl4ai.crawler_pool import close_all, get_crawler, BrowserConfig, janitor
+    # --- 初始化 ---
+    # 预热 crawler
+    await get_crawler(BrowserConfig.load(browser_config))
+
+    # 开启 janitor
+    app.state.janitor = asyncio.create_task(janitor())
+
+    # 如果是 streamable-http 模式，开启 session_manager
+    session_manager = None
+    if config.TRANSPORT_TYPE == "streamable-http":
+        session_manager = app.mcp.session_manager
+
     if session_manager:
         async with session_manager.run():
             yield
+    else:
+        yield
+
+    # --- 清理 ---
+    app.state.janitor.cancel()
+    await close_all()

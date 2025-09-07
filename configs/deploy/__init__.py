@@ -40,4 +40,4 @@ class AuthConfig(BaseSettings):
 
 
 class MCPConfig(BaseSettings):
-    TRANSPORT_TYPE: str = Field(default="sse", description="MCP transport type (stdio, sse, streamable-http)")
+    TRANSPORT_TYPE: str = Field(default="streamable-http", description="MCP transport type (stdio, sse, streamable-http)")

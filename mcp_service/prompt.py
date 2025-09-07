@@ -1,8 +1,8 @@
 from mcp.server.fastmcp.prompts import base
 
-from app_factory import app_context
+from libs import mcp_context
 
-mcp= app_context.get().mcp
+mcp= mcp_context.get()
 
 @mcp.prompt(name="Code Review")
 def review_code(code: str) -> str:

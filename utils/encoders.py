@@ -16,6 +16,7 @@ from pydantic.networks import AnyUrl, NameEmail
 from pydantic.types import SecretBytes, SecretStr
 from pydantic_core import Url
 
+
 def _model_dump(model: BaseModel, mode: Literal["json", "python"] = "json", **kwargs: Any) -> Any:
     return model.model_dump(mode=mode, **kwargs)
 
@@ -214,3 +215,7 @@ def jsonable_encoder(
         custom_encoder=custom_encoder,
         sqlalchemy_safe=sqlalchemy_safe,
     )
+
+
+def merge_dicts(base: dict, new: dict) -> dict:
+    return {**base, **{k: v for k, v in new.items() if v not in [None, {}, [],""]}}

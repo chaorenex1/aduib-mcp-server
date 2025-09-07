@@ -23,9 +23,14 @@ class NacosSettingsSource(RemoteSettingsSource):
     """
     A settings source that retrieves configuration settings from Nacos
     """
+    client: NacosClient
+    data_id: str | None = None
+    configs: Mapping[str, Any]
 
     def __init__(self, configs:Mapping[str, Any]):
         super().__init__(configs)
+        self.data_id = None
+        self.configs = configs
         self.client = NacosClient(
             server_addr=configs["NACOS_SERVER_ADDR"],
             namespace=configs["NACOS_NAMESPACE"],
@@ -33,14 +38,12 @@ class NacosSettingsSource(RemoteSettingsSource):
             user_name=configs["NACOS_USERNAME"],
             password=configs["NACOS_PASSWORD"],
         )
-        self.data_id = f".env.{configs['DEPLOY_ENV']}"
+        self.data_id = f".env.{self.configs.get('APP_NAME')}.{self.configs['DEPLOY_ENV']}"
         self.client.register_config_listener(self.data_id)
-        self.remote_configs=self.client.get_all_dicts(self.data_id)
-        if not self.remote_configs:
-            self.client.publish_config(self.data_id, json.dumps(configs, indent=4))
-            self.remote_configs = configs
-        # self.client.register_instance(service_name=f"{configs['APP_NAME']}_{get_local_ip()}_{configs['APP_PORT']}",ip=get_local_ip(),port=configs["APP_PORT"])
 
     def get_field_value(self, field: FieldInfo, field_name: str) -> tuple[Any, str, bool]:
-        return self.remote_configs.get(field_name), field_name, False
+        remote_configs = self.client.get_config_sync(self.data_id)
+        if not remote_configs:
+            self.client.publish_config_sync(self.data_id, json.dumps(self.configs, indent=4))
+        return remote_configs.get(field_name), field_name, False
 

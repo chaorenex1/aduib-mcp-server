@@ -11,3 +11,9 @@ def get_local_ip():
     finally:
         s.close()
     return local_ip
+
+def get_domain_url(url: str) -> str:
+    """Extract the domain from a URL."""
+    if "://" in url:
+        return url.split("://")[1].split("/")[0]
+    return url.split("/")[0]
