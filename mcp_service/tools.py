@@ -10,12 +10,11 @@ from utils.encoders import merge_dicts
 
 mcp= mcp_context.get()
 
-@mcp.tool(name="爬取网页内容", description="爬取网页内容并返回结果")
-async def crawl_stream_job(
+@mcp.tool(name="Provide URL-based web content crawling", description="Directly crawl and return content from the specified webpage link")
+async def crawl_web(
         urls:list[HttpUrl],
-        query: list[str] | str = None,
 )-> Any:
-    payload=CrawlJobPayload(urls=urls, query=query)
+    payload=CrawlJobPayload(urls=urls)
     if payload.browser_config is None:
         payload.browser_config = browser_config
     else:

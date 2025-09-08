@@ -79,9 +79,6 @@ async def on_page_context_created(page: Page, context: BrowserContext, **kwargs)
     # Called right after a new page + context are created (ideal for auth or route config).
     logger.debug("[HOOK] on_page_context_created - Setting up page & context.")
 
-    # await context.add_init_script(script=load_js_script("auto_toggle"))
-    # await context.add_init_script(script=load_js_script("auto_toggle2"))
-    # await context.add_init_script(script=load_js_script("auto_toggle3"))
     return page
 
 async def before_goto(
@@ -89,16 +86,9 @@ async def before_goto(
 ):
     # Called before navigating to each URL.
     logger.debug(f"[HOOK] before_goto - About to navigate: {url}")
-    # e.g., inject custom headers
-    # await page.set_extra_http_headers({
-    #     "Custom-Header": "my-value"
-    # })
-    # load_js_script("auto_toggle")
-    # load_js_script("auto_toggle2")
-    # load_js_script("auto_toggle3")
-    # await page.add_script_tag(url="https://update.greasyfork.org/scripts/378351/%E3%80%8CCSDNGreener%E3%80%8D%F0%9F%8D%83CSDN%E5%B9%BF%E5%91%8A%E5%AE%8C%E5%85%A8%E8%BF%87%E6%BB%A4%7C%E5%85%8D%E7%99%BB%E5%BD%95%7C%E4%B8%AA%E6%80%A7%E5%8C%96%E6%8E%92%E7%89%88%7C%E6%9C%80%E5%BC%BA%E8%80%81%E7%89%8C%E8%84%9A%E6%9C%AC%7C%E6%8C%81%E7%BB%AD%E6%9B%B4%E6%96%B0.user.js")
-    # await page.add_script_tag(url="https://update.greasyfork.org/scripts/440400/%E8%87%AA%E5%8A%A8%E5%B1%95%E5%BC%80%E5%85%A8%E6%96%87%E9%98%85%E8%AF%BB%E6%9B%B4%E5%A4%9A.user.js")
-    # await page.add_script_tag(url="https://update.greasyfork.org/scripts/438656/%E8%87%AA%E5%8A%A8%E5%B1%95%E5%BC%80.user.js")
+    # await page.add_script_tag(content=load_js_script("auto_toggle"))
+    # await page.add_script_tag(content=load_js_script("auto_toggle2"))
+    # await page.add_script_tag(content=load_js_script("auto_toggle3"))
     return page
 
 async def after_goto(
