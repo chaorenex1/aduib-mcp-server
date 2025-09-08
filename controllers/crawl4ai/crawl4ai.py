@@ -9,7 +9,7 @@ from controllers.params import CrawlJobPayload, CrawlJobResponse
 from service.crawl4ai_service import Crawl4AIService
 from utils.encoders import merge_dicts
 
-router = APIRouter(tags=['crawl4ai'], prefix="/v1")
+router = APIRouter(tags=['crawl'], prefix="/v1")
 
 
 @router.post("/crawl/job", status_code=202)

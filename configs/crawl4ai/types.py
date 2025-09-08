@@ -2,10 +2,11 @@ from enum import StrEnum, Enum
 
 from crawl4ai import KeywordRelevanceScorer, BestFirstCrawlingStrategy, BFSDeepCrawlStrategy, FilterChain, SEOFilter, \
     DeepCrawlStrategy, BM25ContentFilter, PruningContentFilter, LLMContentFilter, \
-    DefaultMarkdownGenerator, AdaptiveCrawler, AsyncWebCrawler, AdaptiveConfig, LLMConfig
+    DefaultMarkdownGenerator, AsyncWebCrawler, AdaptiveConfig, LLMConfig, LLMExtractionStrategy
 from crawl4ai.deep_crawling import ContentRelevanceFilter
 from pydantic import BaseModel
 
+from component.crawl4ai.adaptive_crawler import AdaptiveCrawler
 from configs import config
 
 
@@ -80,6 +81,7 @@ class CrawlResultType(StrEnum):
 class CrawlRule(BaseModel):
     name: str
     url: str
+    search_engine_url: str = None  # e.g., "https://www.google.com/search?q={query}"
     crawl_mode: CrawlMode = CrawlMode.CLASSIC
     adaptive_crawl_method: str = "statistical"  # 'statistical' or 'embedding'
     crawler_result_type: CrawlResultType = CrawlResultType.MARKDOWN
@@ -87,22 +89,27 @@ class CrawlRule(BaseModel):
     filter_type: FilterType = FilterType.FIT
     deep_crawl: bool = False
     deep_crawl_method: str = None  # 'seo' or 'keyword' or 'relevance'
-    deep_crawl_max_depth: int = 2
+    deep_crawl_max_depth: int = 1
+    deep_crawl_max_pages: int = 2
     deep_crawl_threshold: float = 0.7
+    extraction_strategy:str=None  # 'web_content' or 'web_search'
 
     def build_deep_crawl_strategy(self, query: list[str] | str = None) -> DeepCrawlStrategy|None:
         """Build the deep crawl strategy based on the rule settings."""
         match self.deep_crawl_method:
             case "seo":
                 return BFSDeepCrawlStrategy(max_depth=self.deep_crawl_max_depth,
+                                            max_pages=self.deep_crawl_max_pages,
                                             filter_chain=FilterChain(filters=[
                                                 SEOFilter(threshold=self.deep_crawl_threshold, keywords=query)]))
             case "keyword":
                 return BestFirstCrawlingStrategy(max_depth=self.deep_crawl_max_depth,
+                                                 max_pages=self.deep_crawl_max_pages,
                                                  url_scorer=KeywordRelevanceScorer(keywords=query,
                                                                                    weight=self.deep_crawl_threshold))
             case "relevance":
                 return BFSDeepCrawlStrategy(max_depth=self.deep_crawl_max_depth,
+                                            max_pages=self.deep_crawl_max_pages,
                                             filter_chain=FilterChain(filters=[
                                                 ContentRelevanceFilter(threshold=self.deep_crawl_threshold,
                                                                        query=query)]))
@@ -120,7 +127,7 @@ class CrawlRule(BaseModel):
                 return DefaultMarkdownGenerator(content_filter=BM25ContentFilter(user_query=query, use_stemming=False))
             case FilterType.LLM:
                 return DefaultMarkdownGenerator(content_filter=LLMContentFilter(
-                    llm_config=LLMConfig(provider="hosted_vllm/"+config.CRAWLER_LLM_MODEL,base_url=config.CRAWLER_LLM_BASE_URL,api_token=config.CRAWLER_API_KEY,top_p=1.0,temperature=0.01),
+                    llm_config=LLMConfig(provider="hosted_vllm/"+config.CRAWLER_LLM_MODEL,base_url=config.CRAWLER_LLM_BASE_URL,api_token=config.CRAWLER_API_KEY,temperature=0.01),
                     # or use environment variable
                     instruction="""
                         Focus on extracting the core educational content.
@@ -135,7 +142,7 @@ class CrawlRule(BaseModel):
                         Format the output as clean markdown with proper code blocks and headers.
                         """,
                     chunk_token_threshold=4096,  # Adjust based on your needs
-                    verbose=True,
+                    verbose=False,
                     extra_args={
                         "input_cost_per_token": 0.000421,
                         "output_cost_per_token": 0.000520,
@@ -154,17 +161,28 @@ class CrawlRule(BaseModel):
         match self.adaptive_crawl_method:
             case "statistical":
                 return AdaptiveCrawler(crawler=crawler,
-                                       config=AdaptiveConfig(strategy="statistical", confidence_threshold=0.8,top_k_links=5,max_depth=2,max_pages=10))
+                                       config=AdaptiveConfig(strategy="statistical", confidence_threshold=0.8,top_k_links=5,max_depth=5,max_pages=10))
             case "embedding":
                 return AdaptiveCrawler(crawler=crawler,
-                                       config=AdaptiveConfig(strategy="embedding",confidence_threshold=0.8,top_k_links=5,max_depth=2,max_pages=10, embedding_llm_config={
+                                       config=AdaptiveConfig(strategy="embedding",
+                                                             confidence_threshold=0.8,top_k_links=5,max_depth=5,max_pages=10, embedding_llm_config={
+                                           "provider": config.CRAWLER_EMBEDDING_MODEL,
                                            "base_url": config.CRAWLER_LLM_BASE_URL,
-                                           "model": config.CRAWLER_EMBEDDING_MODEL,
-                                           "api_key": config.CRAWLER_API_KEY,
+                                           "api_token": config.CRAWLER_API_KEY,
                                        })
                                        )
             case _:
                 return None
+
+    def get_extraction_strategy(self)->LLMExtractionStrategy:
+        from configs.crawl4ai.crawl_rule import web_content_llm_extraction_strategy
+        match self.extraction_strategy:
+            case 'web_content':
+                return web_content_llm_extraction_strategy
+            case 'web_search':
+                return web_content_llm_extraction_strategy
+            case _:
+                return web_content_llm_extraction_strategy
 
 
 class CrawlRuleGroup(BaseModel):
@@ -177,3 +195,10 @@ class CrawlRuleGroup(BaseModel):
             if group.name == name:
                 return group.rules
         return []
+
+
+class WebSearchContentExtractionResult(BaseModel):
+    title: str
+    url: str
+    description: str
+    summary: str = None

@@ -2,6 +2,7 @@ import asyncio
 import json
 import logging
 import time
+import urllib
 from base64 import b64encode
 from datetime import datetime, timedelta
 from functools import partial
@@ -24,7 +25,9 @@ from fastapi.responses import JSONResponse
 from component.cache.redis_cache import redis_client as redis
 from component.crawl4ai.crawler_pool import get_rule_by_url
 from configs import config
+from configs.crawl4ai.crawl_rule import CrawlRules
 from configs.crawl4ai.types import TaskStatus, CrawlRule, CrawlMode, CrawlResultType
+from controllers.params import WebEngineCrawlJobPayload
 from utils import jsonable_encoder
 
 logger = logging.getLogger(__name__)
@@ -161,8 +164,13 @@ class Crawl4AIService:
             markdown_generator = CrawlRule.build_markdown_generator(crawl_rule)
             crawler_config.markdown_generator = markdown_generator
 
-            deep_crawl_strategy = crawl_rule.build_deep_crawl_strategy(query=query)
-            crawler_config.deep_crawl_strategy = deep_crawl_strategy
+            if crawl_rule.deep_crawl:
+                deep_crawl_strategy = crawl_rule.build_deep_crawl_strategy(query=query)
+                crawler_config.deep_crawl_strategy = deep_crawl_strategy
+
+            if crawl_rule.extraction_strategy:
+                crawler_config.extraction_strategy=crawl_rule.get_extraction_strategy()
+                crawler_config.extraction_strategy.instruction.format(web_content=query)
 
             dispatcher = MemoryAdaptiveDispatcher(
                 memory_threshold_percent=config.MEMORY_THRESHOLD_PRECENT,
@@ -182,7 +190,8 @@ class Crawl4AIService:
                                        dispatcher=dispatcher)
                 results = await partial_func()
 
-                # await crawler.close()
+                # 6. Show usage stats
+                # crawler_config.extraction_strategy.show_usage()
 
                 end_mem_mb = cls._get_memory_mb()  # <--- Get memory after
                 end_time = time.time()
@@ -195,18 +204,24 @@ class Crawl4AIService:
 
                 # Process results to handle PDF bytes
                 processed_results = []
-                if not isinstance(results, AsyncGenerator):
-                    for result in results:
-                        processed_results.append(await cls.create_processed_result(crawl_rule, result))
+                if len(urls)==1 and not results.success:
                     return {
-                        "success": True,
-                        "results": processed_results,
-                        "server_processing_time_s": end_time - start_time,
+                        "success": False,
+                        "results": results.error_message
                     }
                 else:
-                    stream_results = cls.stream_results(crawl_rule=crawl_rule, results_gen=results)
+                    if not isinstance(results, AsyncGenerator):
+                        for result in results:
+                            processed_results.append(await cls.create_processed_result(crawl_rule, result))
+                        return {
+                            "success": True,
+                            "results": processed_results,
+                            "server_processing_time_s": end_time - start_time,
+                        }
+                    else:
+                        stream_results = cls.stream_results(crawl_rule=crawl_rule, results_gen=results)
 
-                    return stream_results
+                        return stream_results
             else:  # Adaptive crawl
 
                 adaptive_crawler = crawl_rule.build_adaptive_crawler(crawler)
@@ -219,15 +234,26 @@ class Crawl4AIService:
                     relevant_pages = adaptive_crawler.get_relevant_content(top_k=5)
                     for page in relevant_pages:
                         print(f"- {page['url']} (score: {page['score']:.2f})")
-                        result = await cls.handle_crawl_request(
-                            urls=urls,
-                            browser_config=jsonable_encoder(obj=browser_config),
-                            crawler_config=jsonable_encoder(obj=crawler_config),
-                            query=query
-                        )
-                        processed_results.append(result)  # Assuming single URL per call
-
-
+                        if float(page['score'])>1.0:
+                            res = await cls.handle_crawl_request(
+                                urls=page['url'],
+                                browser_config=jsonable_encoder(obj=browser_config),
+                                crawler_config=jsonable_encoder(obj=crawler_config),
+                                query=query
+                            )
+                            if res.get('success',False):
+                                processed_results.append(res.get('results',[]))  # Assuming single URL per call
+                if processed_results:
+                    return {
+                        "success": True,
+                        "results": processed_results,
+                        "server_processing_time_s": time.time() - start_time,
+                    }
+                else:
+                    return {
+                        "success": False,
+                        "results": "No relevant content found in adaptive crawl."
+                    }
         except Exception as e:
             logger.error(f"Crawl error: {str(e)}", exc_info=True)
             if 'crawler' in locals():  # Check if crawler was initialized and started
@@ -330,3 +356,28 @@ class Crawl4AIService:
 
         background_tasks.add_task(_runner)
         return {"task_id": task_id}
+
+    @classmethod
+    async def handle_web_search_job(cls, payload:WebEngineCrawlJobPayload):
+        """
+        Handle web search job requests.
+        """
+        web_search_group= CrawlRules.get_rules_by_group("common_search_engine")
+        if web_search_group is None or len(web_search_group.rules)==0:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="No web search rules configured."
+            )
+        results=[]
+        urls=[]
+        content = urllib.parse.quote(payload.web_content)
+        for rule in web_search_group.rules:
+            web_search_url=rule.search_engine_url.format(query=content)
+            urls.append(web_search_url)
+        results= await cls.handle_crawl_request(
+            urls,
+            {},
+            {},
+            content,
+            False)
+        return results

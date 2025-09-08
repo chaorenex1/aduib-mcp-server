@@ -1,8 +1,10 @@
 from typing import Any
 
+from crawl4ai import LLMConfig, LLMExtractionStrategy
 from pydantic_settings import BaseSettings
 
-from configs.crawl4ai.types import CrawlRuleGroup, CrawlRule
+from configs import config
+from configs.crawl4ai.types import CrawlRuleGroup, CrawlRule, WebSearchContentExtractionResult
 from utils import get_domain_url
 
 browser_config={
@@ -28,7 +30,7 @@ browser_config={
     }
 
 crawler_config={
-    "check_robots_txt":True,
+    "check_robots_txt":False,
     "screenshot":True,
     "screenshot_wait_for":5.0,
     "locale":"zh-CN",
@@ -47,6 +49,26 @@ crawler_config={
     },
 }
 
+web_content_llm_extraction_strategy = LLMExtractionStrategy(
+    llm_config=LLMConfig(provider="hosted_vllm/" + config.CRAWLER_LLM_MODEL, base_url=config.CRAWLER_LLM_BASE_URL,
+                         api_token=config.CRAWLER_API_KEY, temperature=0.01),
+    schema=WebSearchContentExtractionResult.model_json_schema(),  # Or use model_json_schema()
+    extraction_type="schema",
+    instruction="extraction: {web_content}",
+    chunk_token_threshold=4096,
+    overlap_rate=0.0,
+    apply_chunking=True,
+    input_format="markdown",  # or "html", "fit_markdown"
+    extra_args={
+        "input_cost_per_token": 0.000421,
+        "output_cost_per_token": 0.000520,
+        "extra_headers": {
+            "User-Agent": config.DEFAULT_USER_AGENT,
+            "X-API-KEY": config.CRAWLER_API_KEY
+        }
+    }
+)
+
 class CrawlRules(BaseSettings):
     crawl_rules:list[dict[str,Any]] = [{
         "name": "default",
@@ -56,7 +78,7 @@ class CrawlRules(BaseSettings):
                 "url": "default",
                 "crawl_mode": "classic",
                 "crawl_result_type": "markdown",
-                "filter_type":"fit",
+                "filter_type":"fit"
             }
         ]
     },{
@@ -68,13 +90,15 @@ class CrawlRules(BaseSettings):
                 "crawl_mode": "classic",
                 "crawl_result_type": "markdown",
                 "filter_type":"fit",
+                "extraction_strategy": "web_content"
             },
             {
                 "name": "csdn",
                 "url": "blog.csdn.net",
                 "crawl_mode": "classic",
                 "crawl_result_type": "markdown",
-                "filter_type":"fit"
+                "filter_type":"fit",
+                "extraction_strategy": "web_content"
             }
         ]
     }, {
@@ -96,25 +120,72 @@ class CrawlRules(BaseSettings):
             }
         ]
     },{
-        "name": "search_engine",
+        "name": "common_search_engine",
         "rules": [
             {
                 "name": "baidu",
                 "url": "www.baidu.com",
+                "search_engine_url": "https://www.baidu.com/s?wd={query}",
                 "crawl_mode": "classic",
-                "deep_crawl": "true",
-                "crawl_result_type": "markdown",
+                "deep_crawl": "false",
+                "crawl_result_type": "html",
                 "filter_type": "fit",
-                "deep_crawl_method": "relevance"
+                "deep_crawl_method": "relevance",
+                "deep_crawl_max_depth":1,
+                "deep_crawl_max_pages":2,
+                "extraction_strategy": "web_search"
             },
             {
                 "name": "google",
-                "url": "https://www.google.com",
+                "url": "www.google.com",
+                "search_engine_url": "https://www.google.com/search?q={query}",
                 "crawl_mode": "classic",
-                "crawl_result_type": "markdown",
+                "crawl_result_type": "html",
                 "filter_type": "fit",
-                "deep_crawl": "true",
-                "deep_crawl_method": "relevance"
+                "deep_crawl": "false",
+                "deep_crawl_method": "relevance",
+                "deep_crawl_max_depth": 1,
+                "deep_crawl_max_pages": 2,
+                "extraction_strategy": "web_search"
+            },
+            {
+                "name": "bing",
+                "url": "www.bing.com",
+                "search_engine_url": "https://www.bing.com/search?q={query}",
+                "crawl_mode": "classic",
+                "deep_crawl": "false",
+                "crawl_result_type": "html",
+                "filter_type": "fit",
+                "deep_crawl_method": "relevance",
+                "deep_crawl_max_depth": 1,
+                "deep_crawl_max_pages": 2,
+                "extraction_strategy": "web_search"
+            },
+            {
+                "name": "brave",
+                "url": "search.brave.com",
+                "search_engine_url": "https://search.brave.com/search?q={query}",
+                "crawl_mode": "classic",
+                "crawl_result_type": "html",
+                "filter_type": "fit",
+                "deep_crawl": "false",
+                "deep_crawl_method": "relevance",
+                "deep_crawl_max_depth": 1,
+                "deep_crawl_max_pages": 2,
+                "extraction_strategy": "web_search"
+            },
+            {
+                "name": "yandex",
+                "url": "yandex.com",
+                "search_engine_url": "https://yandex.com/search/?text={query}",
+                "crawl_mode": "classic",
+                "crawl_result_type": "html",
+                "filter_type": "fit",
+                "deep_crawl": "false",
+                "deep_crawl_method": "relevance",
+                "deep_crawl_max_depth": 1,
+                "deep_crawl_max_pages": 2,
+                "extraction_strategy": "web_search"
             }
         ]
     }
@@ -133,6 +204,14 @@ class CrawlRules(BaseSettings):
                 for rule in group.rules:
                     if rule.name == rule_name:
                         return rule
+        return None
+
+    @classmethod
+    def get_rules_by_group(cls, group_name:str)->CrawlRuleGroup |None:
+        """Get crawl rule group by group name."""
+        for group in cls.get_rules():
+            if group.name == group_name:
+                return group
         return None
 
     @classmethod

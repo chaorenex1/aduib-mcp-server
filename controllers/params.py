@@ -34,3 +34,7 @@ class ToolCrawlJobQueryPayload(BaseModel):
     urls:           list[HttpUrl]
     query: list[str] | str = None
 
+
+class WebEngineCrawlJobPayload(BaseModel):
+    web_content:str
+

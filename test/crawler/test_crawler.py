@@ -31,3 +31,11 @@ def test_query_crawl_job_status():
     status_data = response.json()
     print(status_data)
 
+
+def test_web_search_job():
+    response = requests.post("http://localhost:5002/v1/web_search", json={
+        "web_content": "Python Asyncio",
+    })
+    assert response.status_code == 200
+    data = response.content
+    print(data)

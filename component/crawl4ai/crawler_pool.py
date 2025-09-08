@@ -20,15 +20,17 @@ from utils import get_domain_url
 POOL: Dict[str, AsyncWebCrawler] = {}
 LAST_USED: Dict[str, float] = {}
 LOCK = asyncio.Lock()
-CRAWL_RULES:list[CrawlRuleGroup]=[]
+CRAWL_RULES: list[CrawlRuleGroup] = []
 
-logger=logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
+
 
 def install_browsers_if_needed():
     try:
         subprocess.check_call(["playwright", "install", "--with-deps"])
     except FileNotFoundError:
         logger.error("Playwright CLI 未找到，请先安装 Python 包。")
+
 
 def init_crawler_env():
     from component.crawl4ai.config_loader.config_loader import ConfigLoader
@@ -48,17 +50,19 @@ def init_crawler_env():
             except Exception as e:
                 logger.error(f"Invalid crawl rule config: {r}, error: {e}")
 
-def get_rule_by_url(url:str)->CrawlRule |None:
+
+def get_rule_by_url(url: str) -> CrawlRule | None:
     """Get crawl rule by matching domain name from URL."""
-    res=None
+    res = None
     for group in CRAWL_RULES:
         for rule in group.rules:
             if rule.url == get_domain_url(url):
-                res=rule
+                res = rule
                 break
     return res if res is not None else get_rule_by_url("default")
 
-def change_crawl_rule(new_rules:list[dict]):
+
+def change_crawl_rule(new_rules: list[dict]):
     """Change the current crawl rules to new ones."""
     global CRAWL_RULES
     CRAWL_RULES.clear()
@@ -75,11 +79,13 @@ async def on_browser_created(browser, **kwargs):
     # browser.set_default_timeout(config.BROWSER_DEFAULT_TIMEOUT_MS)
     return browser
 
+
 async def on_page_context_created(page: Page, context: BrowserContext, **kwargs):
     # Called right after a new page + context are created (ideal for auth or route config).
     logger.debug("[HOOK] on_page_context_created - Setting up page & context.")
 
     return page
+
 
 async def before_goto(
         page: Page, context: BrowserContext, url: str, **kwargs
@@ -90,6 +96,7 @@ async def before_goto(
     # await page.add_script_tag(content=load_js_script("auto_toggle2"))
     # await page.add_script_tag(content=load_js_script("auto_toggle3"))
     return page
+
 
 async def after_goto(
         page: Page, context: BrowserContext,
@@ -105,6 +112,7 @@ async def after_goto(
         logger.debug("[HOOK] .content not found, continuing anyway.")
     return page
 
+
 async def on_user_agent_updated(
         page: Page, context: BrowserContext,
         user_agent: str, **kwargs
@@ -113,10 +121,12 @@ async def on_user_agent_updated(
     logger.debug(f"[HOOK] on_user_agent_updated - New user agent: {user_agent}")
     return page
 
+
 async def on_execution_started(page: Page, context: BrowserContext, **kwargs):
     # Called after custom JavaScript execution begins.
     logger.debug("[HOOK] on_execution_started - JS code is running!")
     return page
+
 
 async def before_retrieve_html(page: Page, context: BrowserContext, **kwargs):
     # Called before final HTML retrieval.
@@ -125,6 +135,7 @@ async def before_retrieve_html(page: Page, context: BrowserContext, **kwargs):
     # await page.evaluate("window.scrollTo(0, document.body.scrollHeight);")
     return page
 
+
 async def before_return_html(
         page: Page, context: BrowserContext, html: str, **kwargs
 ):
@@ -132,12 +143,14 @@ async def before_return_html(
     logger.debug(f"[HOOK] before_return_html - HTML length: {len(html)}")
     return page
 
+
 def _sig(cfg: BrowserConfig) -> str:
-    payload = json.dumps(cfg.dump(), sort_keys=True, separators=(",",":"))
+    payload = json.dumps(cfg.dump(), sort_keys=True, separators=(",", ":"))
     return hashlib.sha1(payload.encode()).hexdigest()
 
+
 async def get_crawler(cfg: BrowserConfig) -> AsyncWebCrawler:
-    sig=None
+    sig = None
     try:
         sig = _sig(cfg)
         logger.debug(f"Getting crawler with signature: {sig}")
@@ -152,42 +165,43 @@ async def get_crawler(cfg: BrowserConfig) -> AsyncWebCrawler:
             log_level = LogLevel.ERROR
         else:
             log_level = LogLevel.INFO
-        crawler_logger = AsyncLogger(verbose=False,log_level=log_level,log_file=config.LOG_FILE)
+        crawler_logger = AsyncLogger(verbose=False, log_level=log_level, log_file=config.LOG_FILE)
         async with LOCK:
             if sig in POOL:
                 LAST_USED[sig] = time.time();
                 return POOL[sig]
             if psutil.virtual_memory().percent >= config.MEMORY_THRESHOLD_PRECENT:
                 raise MemoryError("RAM pressure – new browser denied")
-            if cfg.enable_stealth:
-                undetected_adapter = UndetectedAdapter()
-                # Create the crawler strategy with undetected adapter
-                crawler_strategy = AsyncPlaywrightCrawlerStrategy(
-                    browser_config=cfg,
-                    browser_adapter=undetected_adapter if not cfg.enable_stealth else None,
-                    logger=crawler_logger
-                )
-                crawler_strategy.set_hook("on_browser_created", on_browser_created)
-                crawler_strategy.set_hook(
-                    "on_page_context_created", on_page_context_created
-                )
-                crawler_strategy.set_hook("before_goto", before_goto)
-                crawler_strategy.set_hook("after_goto", after_goto)
-                crawler_strategy.set_hook(
-                    "on_user_agent_updated", on_user_agent_updated
-                )
-                crawler_strategy.set_hook(
-                    "on_execution_started", on_execution_started
-                )
-                crawler_strategy.set_hook(
-                    "before_retrieve_html", before_retrieve_html
-                )
-                crawler_strategy.set_hook(
-                    "before_return_html", before_return_html
-                )
-            crawler = AsyncWebCrawler(config=cfg, thread_safe=False,crawler_strategy=crawler_strategy,logger=crawler_logger)
+            undetected_adapter = UndetectedAdapter()
+            # Create the crawler strategy with undetected adapter
+            crawler_strategy = AsyncPlaywrightCrawlerStrategy(
+                browser_config=cfg,
+                browser_adapter=undetected_adapter if not cfg.enable_stealth else None,
+                logger=crawler_logger
+            )
+            crawler_strategy.set_hook("on_browser_created", on_browser_created)
+            crawler_strategy.set_hook(
+                "on_page_context_created", on_page_context_created
+            )
+            crawler_strategy.set_hook("before_goto", before_goto)
+            crawler_strategy.set_hook("after_goto", after_goto)
+            crawler_strategy.set_hook(
+                "on_user_agent_updated", on_user_agent_updated
+            )
+            crawler_strategy.set_hook(
+                "on_execution_started", on_execution_started
+            )
+            crawler_strategy.set_hook(
+                "before_retrieve_html", before_retrieve_html
+            )
+            crawler_strategy.set_hook(
+                "before_return_html", before_return_html
+            )
+            crawler = AsyncWebCrawler(config=cfg, thread_safe=False, crawler_strategy=crawler_strategy,
+                                      logger=crawler_logger)
             await crawler.start()
-            POOL[sig] = crawler; LAST_USED[sig] = time.time()
+            POOL[sig] = crawler;
+            LAST_USED[sig] = time.time()
             return crawler
     except MemoryError as e:
         raise MemoryError(f"RAM pressure – new browser denied: {e}")
@@ -204,10 +218,14 @@ async def get_crawler(cfg: BrowserConfig) -> AsyncWebCrawler:
             POOL.pop(sig, None)
             LAST_USED.pop(sig, None)
         # If we failed to start the browser, we should remove it from the pool
+
+
 async def close_all():
     async with LOCK:
         await asyncio.gather(*(c.close() for c in POOL.values()), return_exceptions=True)
-        POOL.clear(); LAST_USED.clear()
+        POOL.clear();
+        LAST_USED.clear()
+
 
 async def janitor():
     while True:
@@ -218,4 +236,5 @@ async def janitor():
                 if now - LAST_USED[sig] > config.IDLE_TTL_SEC:
                     from contextlib import suppress
                     with suppress(Exception): await crawler.close()
-                    POOL.pop(sig, None); LAST_USED.pop(sig, None)
+                    POOL.pop(sig, None);
+                    LAST_USED.pop(sig, None)
