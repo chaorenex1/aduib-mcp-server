@@ -2,7 +2,7 @@ import requests
 
 def test_create_crawl_job():
     response = requests.post("http://localhost:5002/v1/crawl/job", json={
-        "urls": ["https://blog.csdn.net/weixin_33879932/article/details/114086842"],
+        "urls": ["https://www.cnblogs.com/fengzi7314/p/16992031.html"],
         "browser_config": {},
         "crawler_config": {}
     })
@@ -15,7 +15,7 @@ def test_create_crawl_job():
 
 def test_create_crawl_stream_job():
     response = requests.post("http://localhost:5002/v1/crawl/stream/job", json={
-        "urls": ["https://blog.csdn.net/weixin_33879932/article/details/114086842"],
+        "urls": ["https://www.cnblogs.com/fengzi7314/p/16992031.html"],
         "browser_config": {},
         "crawler_config": {}
     })
@@ -35,6 +35,7 @@ def test_query_crawl_job_status():
 def test_web_search_job():
     response = requests.post("http://localhost:5002/v1/web_search", json={
         "web_content": "Python Asyncio",
+        "search_engine_type":"duckduckgo"
     })
     assert response.status_code == 200
     data = response.content

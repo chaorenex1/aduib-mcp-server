@@ -39,7 +39,7 @@ class NacosSettingsSource(RemoteSettingsSource):
             password=configs["NACOS_PASSWORD"],
         )
         self.data_id = f".env.{self.configs.get('APP_NAME')}.{self.configs['DEPLOY_ENV']}"
-        self.client.register_config_listener_sync(self.data_id)
+        # self.client.register_config_listener_sync(self.data_id)
 
     def get_field_value(self, field: FieldInfo, field_name: str) -> tuple[Any, str, bool]:
         remote_configs = self.client.get_config_sync(self.data_id)

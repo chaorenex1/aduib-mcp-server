@@ -35,7 +35,7 @@ crawler_config={
     "screenshot_wait_for":5.0,
     "locale":"zh-CN",
     "timezone_id":"Asia/Shanghai",
-    "process_iframes":True,
+    "process_iframes":False,
     "remove_overlay_elements":True,
     "magic":True,
     "simulate_user":True,
@@ -87,18 +87,66 @@ class CrawlRules(BaseSettings):
             {
                 "name": "cnblogs",
                 "url": "www.cnblogs.com",
+                "css_selector": "div#topics",
                 "crawl_mode": "classic",
                 "crawl_result_type": "markdown",
-                "filter_type":"fit",
-                "extraction_strategy": "web_content"
+                "filter_type":"fit"
             },
             {
                 "name": "csdn",
-                "url": "blog.csdn.net",
+                "url": "www.csdn.net",
+                "css_selector": "div#blog-content-box",
                 "crawl_mode": "classic",
                 "crawl_result_type": "markdown",
-                "filter_type":"fit",
-                "extraction_strategy": "web_content"
+                "filter_type": "fit"
+            },
+            {
+                "name": "blog_csdn",
+                "url": "blog.csdn.net",
+                "css_selector": "div#blog-content-box",
+                "crawl_mode": "classic",
+                "crawl_result_type": "markdown",
+                "filter_type":"fit"
+            },
+            {
+                "name": "jianshu",
+                "url": "www.jianshu.com",
+                "css_selector": "div.show-content",
+                "crawl_mode": "classic",
+                "crawl_result_type": "markdown",
+                "filter_type": "fit"
+            },
+            {
+                "name": "zhihu",
+                "url": "www.zhihu.com",
+                "css_selector": "div.Post-RichTextContainer",
+                "crawl_mode": "classic",
+                "crawl_result_type": "markdown",
+                "filter_type": "fit"
+            },
+            {
+                "name": "51cto",
+                "url": "www.51cto.com",
+                "css_selector": "div.article-left",
+                "crawl_mode": "classic",
+                "crawl_result_type": "markdown",
+                "filter_type": "fit"
+            },
+            {
+                "name": "51cto_blog",
+                "url": "blog.51cto.com",
+                "css_selector": "div.detail-content-left",
+                "crawl_mode": "classic",
+                "crawl_result_type": "markdown",
+                "filter_type": "fit"
+            },
+            {
+                "name": "tencent_article",
+                "url": "cloud.tencent.com",
+                "css_selector": "div.mod-article-content",
+                "crawl_mode": "classic",
+                "crawl_result_type": "markdown",
+                "filter_type": "fit"
             }
         ]
     }, {
@@ -108,6 +156,7 @@ class CrawlRules(BaseSettings):
                 "name": "github",
                 "url": "github.com",
                 "crawl_mode": "classic",
+                "css_selector": "div.Box-sc-g0xbh4-0",
                 "crawl_result_type": "markdown",
                 "filter_type":"fit"
             },
@@ -125,6 +174,7 @@ class CrawlRules(BaseSettings):
             {
                 "name": "baidu",
                 "url": "www.baidu.com",
+                "css_selector": "#content_left .result h3, #content_left .result span",
                 "search_engine_url": "https://www.baidu.com/s?wd={query}",
                 "crawl_mode": "classic",
                 "deep_crawl": "false",
@@ -132,25 +182,25 @@ class CrawlRules(BaseSettings):
                 "filter_type": "fit",
                 "deep_crawl_method": "relevance",
                 "deep_crawl_max_depth":1,
-                "deep_crawl_max_pages":2,
-                "extraction_strategy": "web_search"
+                "deep_crawl_max_pages":2
             },
             {
                 "name": "google",
                 "url": "www.google.com",
-                "search_engine_url": "https://www.google.com/search?q={query}",
+                "css_selector": "#search .MjjYud",
+                "search_engine_url": "https://www.google.com/search?q={query}&gl=us",
                 "crawl_mode": "classic",
                 "crawl_result_type": "html",
                 "filter_type": "fit",
                 "deep_crawl": "false",
                 "deep_crawl_method": "relevance",
                 "deep_crawl_max_depth": 1,
-                "deep_crawl_max_pages": 2,
-                "extraction_strategy": "web_search"
+                "deep_crawl_max_pages": 2
             },
             {
                 "name": "bing",
                 "url": "www.bing.com",
+                "css_selector": "#b_results h2, #b_results .b_caption",
                 "search_engine_url": "https://www.bing.com/search?q={query}",
                 "crawl_mode": "classic",
                 "deep_crawl": "false",
@@ -158,25 +208,25 @@ class CrawlRules(BaseSettings):
                 "filter_type": "fit",
                 "deep_crawl_method": "relevance",
                 "deep_crawl_max_depth": 1,
-                "deep_crawl_max_pages": 2,
-                "extraction_strategy": "web_search"
+                "deep_crawl_max_pages": 2
             },
             {
                 "name": "brave",
                 "url": "search.brave.com",
-                "search_engine_url": "https://search.brave.com/search?q={query}",
+                "css_selector": "#main a, #main .snippet-content",
+                "search_engine_url": "https://search.brave.com/search?q={query}&gl=us",
                 "crawl_mode": "classic",
                 "crawl_result_type": "html",
                 "filter_type": "fit",
                 "deep_crawl": "false",
                 "deep_crawl_method": "relevance",
                 "deep_crawl_max_depth": 1,
-                "deep_crawl_max_pages": 2,
-                "extraction_strategy": "web_search"
+                "deep_crawl_max_pages": 2
             },
             {
                 "name": "yandex",
                 "url": "yandex.com",
+                "css_selector": "#search-result .OrganicHost, #search-result .Organic-ContentWrapper",
                 "search_engine_url": "https://yandex.com/search/?text={query}",
                 "crawl_mode": "classic",
                 "crawl_result_type": "html",
@@ -184,8 +234,20 @@ class CrawlRules(BaseSettings):
                 "deep_crawl": "false",
                 "deep_crawl_method": "relevance",
                 "deep_crawl_max_depth": 1,
-                "deep_crawl_max_pages": 2,
-                "extraction_strategy": "web_search"
+                "deep_crawl_max_pages": 2
+            },
+            {
+                "name": "duckduckgo",
+                "url": "duckduckgo.com",
+                "css_selector": "#react-layout .wLL07_0Xnd1QZpzpfR4W",
+                "search_engine_url": "https://duckduckgo.com/?q={query}&gl=cn",
+                "crawl_mode": "classic",
+                "crawl_result_type": "html",
+                "filter_type": "fit",
+                "deep_crawl": "false",
+                "deep_crawl_method": "relevance",
+                "deep_crawl_max_depth": 1,
+                "deep_crawl_max_pages": 2
             }
         ]
     }

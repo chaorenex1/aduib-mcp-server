@@ -37,4 +37,5 @@ class ToolCrawlJobQueryPayload(BaseModel):
 
 class WebEngineCrawlJobPayload(BaseModel):
     web_content:str
+    search_engine_type:str='duckduckgo'  # 'google' or 'bing' or 'baidu'
 

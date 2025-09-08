@@ -1,4 +1,4 @@
-from enum import StrEnum, Enum
+from enum import Enum
 
 from crawl4ai import KeywordRelevanceScorer, BestFirstCrawlingStrategy, BFSDeepCrawlStrategy, FilterChain, SEOFilter, \
     DeepCrawlStrategy, BM25ContentFilter, PruningContentFilter, LLMContentFilter, \
@@ -23,7 +23,7 @@ class FilterType(str, Enum):
     LLM = "llm"
 
 
-class CrawlMode(StrEnum):
+class CrawlMode(str,Enum):
     CLASSIC = "classic"
     ADAPTIVE = "adaptive"
 
@@ -48,7 +48,7 @@ class CrawlMode(StrEnum):
                 raise ValueError(f"Unknown crawl mode: {value}")
 
 
-class CrawlResultType(StrEnum):
+class CrawlResultType(str,Enum):
     HTML = "html"
     MARKDOWN = "markdown"
     PDF = "pdf"
@@ -84,7 +84,7 @@ class CrawlRule(BaseModel):
     search_engine_url: str = None  # e.g., "https://www.google.com/search?q={query}"
     crawl_mode: CrawlMode = CrawlMode.CLASSIC
     adaptive_crawl_method: str = "statistical"  # 'statistical' or 'embedding'
-    crawler_result_type: CrawlResultType = CrawlResultType.MARKDOWN
+    crawl_result_type: CrawlResultType = CrawlResultType.MARKDOWN
     css_selector: str = None
     filter_type: FilterType = FilterType.FIT
     deep_crawl: bool = False

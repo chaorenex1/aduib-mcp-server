@@ -50,7 +50,6 @@ async def crawl_stream_job(
         payload.crawler_config = crawler_config
     else:
         payload.crawler_config = merge_dicts(crawler_config, payload.crawler_config)
-        payload.stream =True
     content = await Crawl4AIService.handle_crawl_request([str(u) for u in payload.urls], payload.browser_config,
                                                         payload.crawler_config, payload.query, payload.stream, )
     # result=json.dumps(content).encode('utf-8')

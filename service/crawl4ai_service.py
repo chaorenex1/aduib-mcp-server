@@ -23,12 +23,13 @@ from fastapi.background import BackgroundTasks
 from fastapi.responses import JSONResponse
 
 from component.cache.redis_cache import redis_client as redis
-from component.crawl4ai.crawler_pool import get_rule_by_url
+from component.crawl4ai.crawler_pool import get_rule_by_url, get_rules_by_group
 from configs import config
-from configs.crawl4ai.crawl_rule import CrawlRules
+from configs.crawl4ai.crawl_rule import browser_config as default_browser_config, \
+    crawler_config as default_crawler_config
 from configs.crawl4ai.types import TaskStatus, CrawlRule, CrawlMode, CrawlResultType
 from controllers.params import WebEngineCrawlJobPayload
-from utils import jsonable_encoder
+from utils import jsonable_encoder, merge_dicts
 
 logger = logging.getLogger(__name__)
 
@@ -98,7 +99,7 @@ class Crawl4AIService:
         return response
 
     @classmethod
-    async def stream_results(cls, crawl_rule: CrawlRule | None, results_gen: AsyncGenerator) -> AsyncGenerator[
+    async def stream_results(cls,crawler_config, crawl_rule: CrawlRule | None, results_gen: AsyncGenerator) -> AsyncGenerator[
         str, None]:
         """Stream results with heartbeats and completion markers."""
         import json
@@ -114,7 +115,7 @@ class Crawl4AIService:
                     result_dict = result.model_dump()
                     result_dict['server_memory_mb'] = server_memory_mb
                     logger.info(f"Streaming result for {result_dict.get('url', 'unknown')}")
-                    data = json.dumps(cls.create_processed_result(crawl_rule, result), default=datetime_handler,ensure_ascii=False) + "\n"
+                    data = json.dumps(cls.create_processed_result(crawler_config,crawl_rule, result), default=datetime_handler,ensure_ascii=False) + "\n"
                     yield data
                 except Exception as e:
                     logger.error(f"Serialization error: {e}")
@@ -212,14 +213,14 @@ class Crawl4AIService:
                 else:
                     if not isinstance(results, AsyncGenerator):
                         for result in results:
-                            processed_results.append(await cls.create_processed_result(crawl_rule, result))
+                            processed_results.append(await cls.create_processed_result(crawler_config,crawl_rule, result))
                         return {
                             "success": True,
                             "results": processed_results,
                             "server_processing_time_s": end_time - start_time,
                         }
                     else:
-                        stream_results = cls.stream_results(crawl_rule=crawl_rule, results_gen=results)
+                        stream_results = cls.stream_results(crawler_config=crawler_config,crawl_rule=crawl_rule, results_gen=results)
 
                         return stream_results
             else:  # Adaptive crawl
@@ -278,16 +279,16 @@ class Crawl4AIService:
             )
 
     @classmethod
-    async def create_processed_result(cls, crawl_rule: CrawlRule | None, result) -> Any:
+    async def create_processed_result(cls,crawler_config, crawl_rule: CrawlRule | None, result) -> Any:
         data = None
         result_dict = result.model_dump()
-        if crawl_rule.crawler_result_type == CrawlResultType.MARKDOWN:
+        if crawl_rule.crawl_result_type == CrawlResultType.MARKDOWN:
             if result_dict.get('markdown') is not None and result_dict.get('markdown').get('fit_markdown') is not None:
                 data = result_dict['markdown']['fit_markdown']
             elif result_dict.get('markdown') is not None and result_dict.get('markdown').get(
                     'raw_markdown') is not None:
                 data = result_dict['markdown']['raw_markdown']
-        elif crawl_rule.crawler_result_type == CrawlResultType.PDF:
+        elif crawl_rule.crawl_result_type == CrawlResultType.PDF:
             if result_dict.get('pdf') is not None:
                 data = b64encode(result_dict['pdf']).decode('utf-8')
         else:  # HTML
@@ -298,9 +299,9 @@ class Crawl4AIService:
         return {
             "url": result_dict.get('url', ''),
             "crawl_text": data,
-            "crawl_type": CrawlResultType.value_of(crawl_rule.crawler_result_type) if crawl_rule else 'html',
+            "crawl_type": CrawlResultType.value_of(crawl_rule.crawl_result_type) if crawl_rule else 'html',
             "crawl_media": result_dict.get('media', {}),
-            "screenshot": result_dict.get('screenshot', ''),
+            "screenshot": result_dict.get('screenshot') if crawler_config.screenshot else "",
             "metadata": result_dict.get('metadata', {}),
         }
 
@@ -362,7 +363,7 @@ class Crawl4AIService:
         """
         Handle web search job requests.
         """
-        web_search_group= CrawlRules.get_rules_by_group("common_search_engine")
+        web_search_group = get_rules_by_group("common_search_engine")
         if web_search_group is None or len(web_search_group.rules)==0:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -370,14 +371,16 @@ class Crawl4AIService:
             )
         results=[]
         urls=[]
+        crawler_config=merge_dicts(default_crawler_config, {'screenshot': False})
         content = urllib.parse.quote(payload.web_content)
         for rule in web_search_group.rules:
-            web_search_url=rule.search_engine_url.format(query=content)
-            urls.append(web_search_url)
-        results= await cls.handle_crawl_request(
-            urls,
-            {},
-            {},
-            content,
-            False)
+            if rule.name==payload.search_engine_type:
+                web_search_url=rule.search_engine_url.format(query=content)
+                urls.append(web_search_url)
+                results= await cls.handle_crawl_request(
+                    urls,
+                    default_browser_config,
+                    crawler_config,
+                    content,
+                    False)
         return results

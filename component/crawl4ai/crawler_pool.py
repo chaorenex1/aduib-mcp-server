@@ -21,6 +21,7 @@ POOL: Dict[str, AsyncWebCrawler] = {}
 LAST_USED: Dict[str, float] = {}
 LOCK = asyncio.Lock()
 CRAWL_RULES: list[CrawlRuleGroup] = []
+PARSER_CACHE: Dict[str, any] = {}
 
 logger = logging.getLogger(__name__)
 
@@ -61,6 +62,13 @@ def get_rule_by_url(url: str) -> CrawlRule | None:
                 break
     return res if res is not None else get_rule_by_url("default")
 
+def get_rules_by_group(group_name:str)->CrawlRuleGroup |None:
+    """Get crawl rule group by group name."""
+    for group in CRAWL_RULES:
+        if group.name == group_name:
+            return group
+    return None
+
 
 def change_crawl_rule(new_rules: list[dict]):
     """Change the current crawl rules to new ones."""
@@ -71,6 +79,19 @@ def change_crawl_rule(new_rules: list[dict]):
             CRAWL_RULES.append(CrawlRuleGroup.model_validate(r))
         except Exception as e:
             logger.error(f"Invalid crawl rule config: {r}, error: {e}")
+
+def html_parser(crawl_rule_name: str):
+    """decorator to set HTML parser based on crawl rule name."""
+    def decorator(cls):
+        if crawl_rule_name in PARSER_CACHE:
+            logger.warning(f"Parser for rule {crawl_rule_name} is already registered, overwriting.")
+        PARSER_CACHE[crawl_rule_name] = cls()
+        return cls
+    return decorator
+
+def get_html_parser(crawl_rule_name: str):
+    """Get the HTML parser class for the given crawl rule name."""
+    return PARSER_CACHE.get(crawl_rule_name, None)
 
 
 async def on_browser_created(browser, **kwargs):
