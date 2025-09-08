@@ -2,7 +2,7 @@ import requests
 
 def test_create_crawl_job():
     response = requests.post("http://localhost:5002/v1/crawl/job", json={
-        "urls": ["https://blog.csdn.net/2401_83794450/article/details/151158504"],
+        "urls": ["https://blog.csdn.net/weixin_33879932/article/details/114086842"],
         "browser_config": {},
         "crawler_config": {}
     })
@@ -15,7 +15,7 @@ def test_create_crawl_job():
 
 def test_create_crawl_stream_job():
     response = requests.post("http://localhost:5002/v1/crawl/stream/job", json={
-        "urls": ["https://blog.csdn.net/2401_83794450/article/details/151158504"],
+        "urls": ["https://blog.csdn.net/weixin_33879932/article/details/114086842"],
         "browser_config": {},
         "crawler_config": {}
     })

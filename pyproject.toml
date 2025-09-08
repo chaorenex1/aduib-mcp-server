@@ -26,9 +26,9 @@ dependencies = [
 [project.optional-dependencies]
 crawler = [
     "crawl4ai",
-    "yt-dlp",
     "playwright-stealth"
 ]
+yt-dlp= ["yt-dlp"]
 
 [tool.uv]
 [dependency-groups]

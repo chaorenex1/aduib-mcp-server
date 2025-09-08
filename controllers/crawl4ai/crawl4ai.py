@@ -2,21 +2,18 @@ from typing import Any, AsyncGenerator
 
 from fastapi import APIRouter, BackgroundTasks
 from starlette.requests import Request
-from starlette.responses import JSONResponse, StreamingResponse
+from starlette.responses import StreamingResponse
 
 from configs.crawl4ai.crawl_rule import browser_config, crawler_config
-from controllers.params import CrawlJobPayload
-from libs import mcp_context
+from controllers.params import CrawlJobPayload, CrawlJobResponse
 from service.crawl4ai_service import Crawl4AIService
 from utils.encoders import merge_dicts
-
-mcp= mcp_context.get()
 
 router = APIRouter(tags=['crawl4ai'], prefix="/v1")
 
 
 @router.post("/crawl/job", status_code=202)
-async def crawl_job_enqueue(
+async def crawl_job(
         payload: CrawlJobPayload,
         background_tasks: BackgroundTasks,
 ):
@@ -41,9 +38,9 @@ async def crawl_job_enqueue(
 
 
 @router.post("/crawl/stream/job", response_model=None)
-async def crawl_job_enqueue(
+async def crawl_stream_job(
         payload: CrawlJobPayload,
-)-> JSONResponse | StreamingResponse:
+)-> Any:
     # Use default configs if not provided
     if payload.browser_config is None:
         payload.browser_config = browser_config
@@ -57,11 +54,11 @@ async def crawl_job_enqueue(
     content = await Crawl4AIService.handle_crawl_request([str(u) for u in payload.urls], payload.browser_config,
                                                         payload.crawler_config, payload.query, payload.stream, )
     # result=json.dumps(content).encode('utf-8')
-    if isinstance(content,dict):
-        return JSONResponse(content=content, media_type="application/json;charset=utf-8")
+    if not isinstance(content,AsyncGenerator):
+        return CrawlJobResponse.model_validate(content)
     else:
         async def event_generator() -> AsyncGenerator[Any, None]:
-            yield f"{content}\n\n"
+            yield f"{CrawlJobResponse.model_validate(content)}\n\n"
         return StreamingResponse(content=event_generator(), media_type="text/event-stream")
 
 

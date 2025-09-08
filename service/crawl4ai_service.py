@@ -2,6 +2,7 @@ import asyncio
 import json
 import logging
 import time
+from base64 import b64encode
 from datetime import datetime, timedelta
 from functools import partial
 from typing import List, Dict, Any
@@ -110,7 +111,7 @@ class Crawl4AIService:
                     result_dict = result.model_dump()
                     result_dict['server_memory_mb'] = server_memory_mb
                     logger.info(f"Streaming result for {result_dict.get('url', 'unknown')}")
-                    data = json.dumps(cls.create_processed_result(crawl_rule, result), default=datetime_handler) + "\n"
+                    data = json.dumps(cls.create_processed_result(crawl_rule, result), default=datetime_handler,ensure_ascii=False) + "\n"
                     yield data
                 except Exception as e:
                     logger.error(f"Serialization error: {e}")
@@ -201,8 +202,6 @@ class Crawl4AIService:
                         "success": True,
                         "results": processed_results,
                         "server_processing_time_s": end_time - start_time,
-                        "server_memory_delta_mb": mem_delta_mb,
-                        "server_peak_memory_mb": peak_mem_mb
                     }
                 else:
                     stream_results = cls.stream_results(crawl_rule=crawl_rule, results_gen=results)
@@ -231,7 +230,7 @@ class Crawl4AIService:
 
         except Exception as e:
             logger.error(f"Crawl error: {str(e)}", exc_info=True)
-            if 'crawler' in locals() and crawler.ready:  # Check if crawler was initialized and started
+            if 'crawler' in locals():  # Check if crawler was initialized and started
                 #  try:
                 #      await crawler.close()
                 #  except Exception as close_e:
@@ -254,8 +253,8 @@ class Crawl4AIService:
 
     @classmethod
     async def create_processed_result(cls, crawl_rule: CrawlRule | None, result) -> Any:
-        result_dict = result.model_dump()
         data = None
+        result_dict = result.model_dump()
         if crawl_rule.crawler_result_type == CrawlResultType.MARKDOWN:
             if result_dict.get('markdown') is not None and result_dict.get('markdown').get('fit_markdown') is not None:
                 data = result_dict['markdown']['fit_markdown']
@@ -264,13 +263,20 @@ class Crawl4AIService:
                 data = result_dict['markdown']['raw_markdown']
         elif crawl_rule.crawler_result_type == CrawlResultType.PDF:
             if result_dict.get('pdf') is not None:
-                data = result_dict['pdf']
+                data = b64encode(result_dict['pdf']).decode('utf-8')
         else:  # HTML
             if result_dict.get('cleaned_html') is not None:
                 data = result_dict['cleaned_html']
             else:
                 data = result_dict.get('fit_html')
-        return data, result_dict.get('screenshot', '')
+        return {
+            "url": result_dict.get('url', ''),
+            "crawl_text": data,
+            "crawl_type": CrawlResultType.value_of(crawl_rule.crawler_result_type) if crawl_rule else 'html',
+            "crawl_media": result_dict.get('media', {}),
+            "screenshot": result_dict.get('screenshot', ''),
+            "metadata": result_dict.get('metadata', {}),
+        }
 
     @classmethod
     async def handle_crawl_job(

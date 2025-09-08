@@ -62,6 +62,8 @@ class MCPFactory:
             log.error(f"Unsupported TRANSPORT_TYPE: {config.TRANSPORT_TYPE}")
 
     def mount_mcp_app(self,app):
+        from mcp_service import load_mcp_plugins
+        load_mcp_plugins("mcp_service")
         if config.TRANSPORT_TYPE == "stdio":
             self.mcp.run(transport=config.TRANSPORT_TYPE)
         elif config.TRANSPORT_TYPE == "sse":

@@ -49,6 +49,17 @@ crawler_config={
 
 class CrawlRules(BaseSettings):
     crawl_rules:list[dict[str,Any]] = [{
+        "name": "default",
+        "rules": [
+            {
+                "name": "default",
+                "url": "default",
+                "crawl_mode": "classic",
+                "crawl_result_type": "markdown",
+                "filter_type":"fit",
+            }
+        ]
+    },{
         "name": "it_blog",
         "rules": [
             {
@@ -74,12 +85,14 @@ class CrawlRules(BaseSettings):
                 "url": "github.com",
                 "crawl_mode": "classic",
                 "crawl_result_type": "markdown",
+                "filter_type":"fit"
             },
             {
                 "name": "gitlab",
                 "url": "gitlab.com",
                 "crawl_mode": "classic",
                 "crawl_result_type": "markdown",
+                "filter_type":"fit"
             }
         ]
     },{
@@ -90,14 +103,18 @@ class CrawlRules(BaseSettings):
                 "url": "www.baidu.com",
                 "crawl_mode": "classic",
                 "deep_crawl": "true",
-                "deep_crawl_method": "relevance",
+                "crawl_result_type": "markdown",
+                "filter_type": "fit",
+                "deep_crawl_method": "relevance"
             },
             {
                 "name": "google",
                 "url": "https://www.google.com",
                 "crawl_mode": "classic",
+                "crawl_result_type": "markdown",
+                "filter_type": "fit",
                 "deep_crawl": "true",
-                "deep_crawl_method": "relevance",
+                "deep_crawl_method": "relevance"
             }
         ]
     }

@@ -103,7 +103,10 @@ async def lifespan(app: AduibAIApp) -> AsyncIterator[None]:
     from component.crawl4ai.crawler_pool import close_all, janitor
     # --- 初始化 ---
     # 预热 crawler
-    # await get_crawler(BrowserConfig.load(browser_config))
+    from component.crawl4ai.crawler_pool import get_crawler
+    from crawl4ai import BrowserConfig
+    from configs.crawl4ai.crawl_rule import browser_config
+    await get_crawler(BrowserConfig.load(browser_config))
 
     # 开启 janitor
     app.state.janitor = asyncio.create_task(janitor())

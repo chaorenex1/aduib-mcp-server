@@ -396,6 +396,7 @@ class FastMCP:
             )
 
         def decorator(fn: AnyFunction) -> AnyFunction:
+            logger.debug(f"Adding tool {fn.__name__}")
             self.add_tool(
                 fn, name=name, description=description, annotations=annotations
             )

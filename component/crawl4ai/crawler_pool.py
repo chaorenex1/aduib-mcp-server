@@ -50,11 +50,13 @@ def init_crawler_env():
 
 def get_rule_by_url(url:str)->CrawlRule |None:
     """Get crawl rule by matching domain name from URL."""
+    res=None
     for group in CRAWL_RULES:
         for rule in group.rules:
             if rule.url == get_domain_url(url):
-                return rule
-    return None
+                res=rule
+                break
+    return res if res is not None else get_rule_by_url("default")
 
 def change_crawl_rule(new_rules:list[dict]):
     """Change the current crawl rules to new ones."""
@@ -149,7 +151,18 @@ async def get_crawler(cfg: BrowserConfig) -> AsyncWebCrawler:
     try:
         sig = _sig(cfg)
         logger.debug(f"Getting crawler with signature: {sig}")
-        crawler_logger = AsyncLogger()
+        from crawl4ai.async_logger import LogLevel
+        if config.LOG_LEVEL == "DEBUG":
+            log_level = LogLevel.DEBUG
+        elif config.LOG_LEVEL == "INFO":
+            log_level = LogLevel.INFO
+        elif config.LOG_LEVEL == "WARNING":
+            log_level = LogLevel.WARNING
+        elif config.LOG_LEVEL == "ERROR":
+            log_level = LogLevel.ERROR
+        else:
+            log_level = LogLevel.INFO
+        crawler_logger = AsyncLogger(verbose=False,log_level=log_level,log_file=config.LOG_FILE)
         async with LOCK:
             if sig in POOL:
                 LAST_USED[sig] = time.time();

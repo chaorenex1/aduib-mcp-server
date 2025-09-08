@@ -16,9 +16,11 @@ def init_logging(app: AduibAIApp):
         if log_file:
             log_dir = os.path.join(app.app_home, "logs")
             os.makedirs(log_dir, exist_ok=True)
+            filename = os.path.join(log_dir, log_file)
+            config.LOG_FILE = filename
             log_handlers.append(
                 RotatingFileHandler(
-                    filename=os.path.join(log_dir, log_file),
+                    filename=filename,
                     maxBytes=config.LOG_FILE_MAX_BYTES * 1024 * 1024,
                     backupCount=config.LOG_FILE_BACKUP_COUNT,
                 )
