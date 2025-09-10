@@ -47,9 +47,9 @@ if [ ! -d ".venv" ]; then
     echo "⚡ 创建虚拟环境..."
     uv venv .venv
 fi
-mv ".env.production" ".env"
-uv sync --frozen --no-dev --extra crawler
 source .venv/bin/activate
+cp -r ".env.production" ".env"
+uv sync --frozen --no-dev --extra crawler
 if [ ! -d "$HOME/.cache/ms-playwright" ]; then
     playwright install
 fi
