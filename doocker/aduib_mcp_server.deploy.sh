@@ -1,11 +1,9 @@
 #!/usr/bin/env bash
-set -euo pipefail
-
 # 配置项（根据需要修改）
 PROJECT_NAME="aduib-mcp-server"
 REPO_URL="https://github.com/chaorenex1/aduib-mcp-server.git"
 BRANCH="main"
-WORK_DIR="."
+WORK_DIR="$./${PROJECT_NAME}"
 CONTAINER_NAME="${PROJECT_NAME}-app"
 IMAGE_NAME="${PROJECT_NAME}"
 PORT=5002
