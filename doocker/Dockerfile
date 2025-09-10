@@ -22,7 +22,8 @@ RUN \
     sed -i 's|http://archive.ubuntu.com|http://mirrors.aliyun.com|g' /etc/apt/sources.list; \
   else \
     echo "WARNING: Standard Debian/Ubuntu APT source files not found in expected locations."; \
-  fi
+  fi && \
+  echo "INFO: APT sources modification complete."
 # 安装系统依赖（用于编译扩展，如 psycopg2）
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
