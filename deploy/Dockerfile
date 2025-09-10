@@ -48,4 +48,4 @@ RUN mkdir -p /app/logs
 EXPOSE 5002
 
 # 启动命令：假设 FastAPI app 在 aduib_mcp_server.app:app
-CMD ["/deploy/aduib_mcp_server.venv.sh"]
+CMD ["/app/deploy/aduib_mcp_server.venv.sh"]
