@@ -74,7 +74,7 @@ mkdir -p "${LOG_HOST_DIR}"
 # 运行新容器
 log "启动容器 ${CONTAINER_NAME}"
 docker run -d \
-  --env-file ${WORK_DIR}/.env.production \
+  --env-file .env.production \
   --name "${CONTAINER_NAME}" \
   --restart unless-stopped \
   -p "${PORT}:${EXPOSED_PORT}" \
