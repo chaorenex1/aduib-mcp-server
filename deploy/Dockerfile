@@ -47,6 +47,8 @@ RUN mkdir -p /app/logs
 
 # 暴露端口
 EXPOSE 5002
+EXPOSE 6002
+EXPOSE 9222
 
 # 启动命令：假设 FastAPI app 在 aduib_mcp_server.app:app
 CMD ["/app/deploy/aduib_mcp_server.sh"]

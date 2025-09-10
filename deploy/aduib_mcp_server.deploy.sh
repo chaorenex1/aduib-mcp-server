@@ -6,9 +6,11 @@ BRANCH="main"
 WORK_DIR="./${PROJECT_NAME}"
 CONTAINER_NAME="${PROJECT_NAME}-app"
 IMAGE_NAME="${PROJECT_NAME}"
-PORT=5002
 LOG_HOST_DIR="${WORK_DIR}/logs"
+PORT=5002
 EXPOSED_PORT=5002
+RPC_PORT=6002
+RPC_EXPOSED_PORT=6002
 
 # 颜色输出（可选）
 GREEN="\033[0;32m"
@@ -76,6 +78,7 @@ docker run -d \
   --name "${CONTAINER_NAME}" \
   --restart unless-stopped \
   -p "${PORT}:${EXPOSED_PORT}" \
+  -p "${RPC_PORT}:${RPC_EXPOSED_PORT}" \
   -v "${LOG_HOST_DIR}:/app/logs" \
   -v /home/zzh/.cache/ms-playwright:/root/.cache/ms-playwright \
   "${IMAGE_TAG}"
