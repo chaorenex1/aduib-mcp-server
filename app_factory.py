@@ -109,15 +109,29 @@ async def run_service_register(app: AduibAIApp):
         "SERVICE_TRANSPORT_SCHEME": app.config.SERVICE_TRANSPORT_SCHEME,
         "APP_NAME": app.config.APP_NAME+f"-{app.config.SERVICE_TRANSPORT_SCHEME}",
     }
-    from aduib_rpc.server.request_excution.service_call import load_service_plugins
     from aduib_rpc.discover.registry.registry_factory import ServiceRegistryFactory
+    from aduib_rpc.discover.entities import ServiceInstance
+    from aduib_rpc.utils.constant import AIProtocols
+    from aduib_rpc.utils.constant import TransportSchemes
     from aduib_rpc.discover.service import AduibServiceFactory
-    service = await ServiceRegistryFactory.start_service_registry(registry_config)
-    service.port=6002
-    if service and config.DOCKER_ENV:
-        service.host=config.APP_HOST
-    factory = AduibServiceFactory(service_instance=service)
+    from aduib_rpc.server.request_excution.service_call import load_service_plugins
+    ip, port = NetUtils.get_ip_and_free_port()
+    service_registry = ServiceRegistryFactory.start_service_discovery(registry_config)
+    service_info = ServiceInstance(service_name=config.APP_NAME or 'aduib-rpc-app', host=ip, port=port,
+                                       protocol=AIProtocols.AduibRpc, weight=1,
+                                       scheme=config.SERVICE_TRANSPORT_SCHEME or TransportSchemes.GRPC)
+    if service_info and config.RPC_SERVICE_PORT>0:
+        service_info.port=config.RPC_SERVICE_PORT
+
+    factory = AduibServiceFactory(service_instance=service_info)
     load_service_plugins('rpc.service')
+    if service_info and config.DOCKER_ENV:
+        new_service_info = ServiceInstance(service_name=service_info.service_name, host=config.RPC_SERVICE_HOST, port=service_info.port,
+                                       protocol=service_info.protocol, weight=service_info.weight,
+                                       scheme=service_info.scheme)
+        await service_registry.register_service(new_service_info)
+    else:
+        await service_registry.register_service(service_info)
     await factory.run_server()
 
 

@@ -8,7 +8,9 @@ class DeploymentConfig(BaseSettings):
     APP_HOME: str = Field(default="", description="Application home directory")
     APP_VERSION: str = Field(default="1.0.0", description="Application version")
     APP_HOST: str = Field(default="0.0.0.0",description="Application host")
-    APP_PORT: int = Field(default=5001,description="Application port")
+    APP_PORT: int = Field(default=5002,description="Application port")
+    RPC_SERVICE_PORT: int = Field(default=0,description="RPC service port")
+    RPC_SERVICE_HOST: str = Field(default="",description="RPC service host")
     DOCKER_ENV: bool = Field(default=False, description="Running inside a Docker container")
     APP_MAX_REQUESTS: int = Field(
         default=1000, description="Maximum number of requests the app can handle"
