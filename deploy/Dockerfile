@@ -1,5 +1,5 @@
 # dockerfile
-FROM mcr.microsoft.com/playwright:v1.55.0-noble
+FROM python:3.12-slim
 
 # 基本设置
 ENV PYTHONUNBUFFERED=1
@@ -32,7 +32,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # 先复制依赖描述文件以利用缓存
-COPY pyproject.toml uv.lock* ./
+COPY pyproject.toml uv.lock* .env.production ./
 
 # 安装 uv 包管理器并使用 uv 安装依赖（只安装非 dev 依赖）
 RUN pip install --no-cache-dir uv \
@@ -48,4 +48,4 @@ RUN mkdir -p /app/logs
 EXPOSE 5002
 
 # 启动命令：假设 FastAPI app 在 aduib_mcp_server.app:app
-ENTRYPOINT ["./deploy/aduib_mcp_server.venv.sh"]
+CMD ["/deploy/aduib_mcp_server.venv.sh"]
