@@ -6,6 +6,7 @@ import pathlib
 import time
 from typing import AsyncIterator
 
+from aduib_rpc.utils.net_utils import NetUtils
 from fastapi.routing import APIRoute
 from starlette.staticfiles import StaticFiles
 
@@ -112,6 +113,7 @@ async def run_service_register(app: AduibAIApp):
     from aduib_rpc.discover.registry.registry_factory import ServiceRegistryFactory
     from aduib_rpc.discover.service import AduibServiceFactory
     service = await ServiceRegistryFactory.start_service_registry(registry_config)
+    service.port=6002
     if service and config.DOCKER_ENV:
         service.host=config.APP_HOST
     factory = AduibServiceFactory(service_instance=service)
