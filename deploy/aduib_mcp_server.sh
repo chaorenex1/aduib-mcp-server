@@ -51,7 +51,7 @@ cp -r ".env.production" ".env"
 uv sync --frozen --no-dev --extra crawler
 if [ ! -d "$HOME/.cache/ms-playwright" ]; then
     source .venv/bin/activate
-    playwright install
+    playwright install chromium --with-deps
 fi
 export PYTHONUNBUFFERED=1
 export PYTHONPATH="${WORK_DIR}"
