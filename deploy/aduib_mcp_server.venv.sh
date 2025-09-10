@@ -47,9 +47,12 @@ if [ ! -d ".venv" ]; then
     echo "⚡ 创建虚拟环境..."
     uv venv .venv
 fi
-mv "${WORK_DIR}/.env.production" "${WORK_DIR}/.env"
+mv ".env.production" ".env"
 uv sync --frozen --no-dev --extra crawler
 source .venv/bin/activate
+if [ ! -d "$HOME/.cache/ms-playwright" ]; then
+    playwright install
+fi
 export PYTHONUNBUFFERED=1
 export PYTHONPATH="${WORK_DIR}"
 nohup python app.py > /dev/null 2>&1 &

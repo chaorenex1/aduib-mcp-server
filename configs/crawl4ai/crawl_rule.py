@@ -13,7 +13,7 @@ browser_config={
         "browser_mode":"dedicated",
         "text_mode": False,
         "headless": True,
-        "enable_stealth": True,
+        "enable_stealth": False,
         # "proxy_config": {
         #     "server": "",
         #     "username": "",
