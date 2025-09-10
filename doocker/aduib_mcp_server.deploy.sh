@@ -64,7 +64,7 @@ fi
 
 # 构建新镜像
 log "构建镜像 ${IMAGE_TAG}"
-docker build -t "${IMAGE_TAG}" -f ./docker/Dockerfile .
+docker build -t "${IMAGE_TAG}" -f ${WORK_DIR}/docker/Dockerfile .
 
 # 创建日志目录（宿主机）
 mkdir -p "${LOG_HOST_DIR}"
