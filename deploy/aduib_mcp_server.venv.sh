@@ -47,14 +47,14 @@ if [ ! -d ".venv" ]; then
     echo "⚡ 创建虚拟环境..."
     uv venv .venv
 fi
-source .venv/bin/activate
 cp -r ".env.production" ".env"
 uv sync --frozen --no-dev --extra crawler
 if [ ! -d "$HOME/.cache/ms-playwright" ]; then
+    source .venv/bin/activate
     playwright install
 fi
 export PYTHONUNBUFFERED=1
 export PYTHONPATH="${WORK_DIR}"
-nohup python app.py > /dev/null 2>&1 &
+nohup .venv/bin/python app.py > /dev/null 2>&1 &
 # 输出进程号
 echo "${PROJECT_NAME}脚本已后台运行，PID: $!"

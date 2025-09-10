@@ -9,8 +9,8 @@ from utils import get_domain_url
 
 browser_config={
 
-        "use_persistent_context":True,
-        "browser_mode":"builtin",
+        # "use_persistent_context":False,
+        "browser_mode":"dedicated",
         "text_mode": False,
         "headless": True,
         "enable_stealth": False,
@@ -26,9 +26,9 @@ browser_config={
             "platforms": ['desktop', 'mobile'],  # or "mobile"
             "min_version": 100.0,
         },
-        "extra_args": [
-            "--no-sandbox",
-        ],
+        # "extra_args": [
+        #     "--no-sandbox",
+        # ],
     }
 
 crawler_config={

@@ -28,7 +28,7 @@ logger = logging.getLogger(__name__)
 
 def install_browsers_if_needed():
     try:
-        subprocess.check_call(["playwright", "install", "--with-deps"])
+        subprocess.check_call(["playwright", "install","chromium", "--with-deps"])
     except FileNotFoundError:
         logger.error("Playwright CLI 未找到，请先安装 Python 包。")
 
