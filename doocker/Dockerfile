@@ -32,14 +32,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # 先复制依赖描述文件以利用缓存
-COPY pyproject.toml uv.lock* ./
+COPY pyproject.toml uv.lock* ./app/
 
 # 安装 uv 包管理器并使用 uv 安装依赖（只安装非 dev 依赖）
 RUN pip install --no-cache-dir uv \
     && uv sync --frozen --no-dev
 
 # 复制项目源码
-COPY . .
+COPY . . /app/
 
 # 确保日志目录存在
 RUN mkdir -p /app/logs
