@@ -106,12 +106,16 @@ async def run_service_register(app: AduibAIApp):
         "DISCOVERY_SERVICE_ENABLED": app.config.DISCOVERY_SERVICE_ENABLED,
         "DISCOVERY_SERVICE_TYPE": app.config.DISCOVERY_SERVICE_TYPE,
         "SERVICE_TRANSPORT_SCHEME": app.config.SERVICE_TRANSPORT_SCHEME,
-        "APP_NAME": app.config.APP_NAME,
+        "APP_NAME": app.config.APP_NAME+f"-{app.config.SERVICE_TRANSPORT_SCHEME}",
     }
+    from aduib_rpc.server.request_excution.service_call import load_service_plugins
     from aduib_rpc.discover.registry.registry_factory import ServiceRegistryFactory
-    service = await ServiceRegistryFactory.start_service_registry(registry_config)
     from aduib_rpc.discover.service import AduibServiceFactory
+    service = await ServiceRegistryFactory.start_service_registry(registry_config)
+    if service and config.DOCKER_ENV:
+        service.host=config.APP_HOST
     factory = AduibServiceFactory(service_instance=service)
+    load_service_plugins('rpc.service')
     await factory.run_server()
 
 
