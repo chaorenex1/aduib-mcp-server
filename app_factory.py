@@ -117,7 +117,7 @@ async def run_service_register(app: AduibAIApp):
     from aduib_rpc.server.request_excution.service_call import load_service_plugins
     ip, port = NetUtils.get_ip_and_free_port()
     service_registry = ServiceRegistryFactory.start_service_discovery(registry_config)
-    service_info = ServiceInstance(service_name=config.APP_NAME or 'aduib-rpc-app', host=ip, port=port,
+    service_info = ServiceInstance(service_name=registry_config.get('APP_NAME', 'aduib-rpc'), host=ip, port=port,
                                        protocol=AIProtocols.AduibRpc, weight=1,
                                        scheme=config.SERVICE_TRANSPORT_SCHEME or TransportSchemes.GRPC)
     if service_info and config.RPC_SERVICE_PORT>0:
