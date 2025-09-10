@@ -3,7 +3,7 @@
 PROJECT_NAME="aduib-mcp-server"
 REPO_URL="https://github.com/chaorenex1/aduib-mcp-server.git"
 BRANCH="main"
-WORK_DIR="$./${PROJECT_NAME}"
+WORK_DIR="./${PROJECT_NAME}"
 CONTAINER_NAME="${PROJECT_NAME}-app"
 IMAGE_NAME="${PROJECT_NAME}"
 PORT=5002
@@ -64,7 +64,7 @@ fi
 
 # 构建新镜像
 log "构建镜像 ${IMAGE_TAG}"
-docker build -t "${IMAGE_TAG}" .
+docker build -t "${IMAGE_TAG}" -f ./docker/Dockerfile .
 
 # 创建日志目录（宿主机）
 mkdir -p "${LOG_HOST_DIR}"
