@@ -1,5 +1,5 @@
 # dockerfile
-FROM python:3.12-slim
+FROM mcr.microsoft.com/playwright:v1.55.0-noble
 
 # 基本设置
 ENV PYTHONUNBUFFERED=1
