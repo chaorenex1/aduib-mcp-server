@@ -36,7 +36,7 @@ COPY pyproject.toml uv.lock* ./
 
 # 安装 uv 包管理器并使用 uv 安装依赖（只安装非 dev 依赖）
 RUN pip install --no-cache-dir uv \
-    && uv sync --frozen --no-dev
+    && uv sync --frozen --no-dev --extra crawler
 
 # 复制项目源码
 COPY . .

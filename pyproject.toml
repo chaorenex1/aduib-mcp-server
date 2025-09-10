@@ -37,6 +37,6 @@ dev= [
     "pytest==8.4.1"
 ]
 
-#[[tool.uv.index]]
-#url = "http://mirrors.aliyun.com/pypi/simple/"
-#default = true
+[[tool.uv.index]]
+url = "http://mirrors.aliyun.com/pypi/simple/"
+default = true
