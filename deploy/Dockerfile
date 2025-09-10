@@ -1,6 +1,12 @@
 # dockerfile
 FROM mcr.microsoft.com/playwright:v1.55.0-noble AS base
+
 FROM python:3.12-slim
+
+# 复制 playwright 相关内容
+COPY --from=base /ms-playwright /ms-playwright
+COPY --from=base /usr/bin /usr/bin
+COPY --from=base /usr/lib /usr/lib
 # 基本设置
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONPATH=/app
@@ -48,4 +54,4 @@ RUN mkdir -p /app/logs
 EXPOSE 5002
 
 # 启动命令：假设 FastAPI app 在 aduib_mcp_server.app:app
-ENTRYPOINT["/deploy/aduib_mcp_server.venv.sh"]
+ENTRYPOINT ["./deploy/aduib_mcp_server.venv.sh"]
