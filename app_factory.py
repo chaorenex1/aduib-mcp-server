@@ -96,10 +96,30 @@ def init_crawler_pool(app: AduibAIApp):
     from component.crawl4ai.crawler_pool import init_crawler_env
     init_crawler_env()
 
+async def run_service_register(app: AduibAIApp):
+    registry_config = {
+        "server_addresses": app.config.NACOS_SERVER_ADDR,
+        "namespace": app.config.NACOS_NAMESPACE,
+        "group_name": app.config.NACOS_GROUP,
+        "username": app.config.NACOS_USERNAME,
+        "password": app.config.NACOS_PASSWORD,
+        "DISCOVERY_SERVICE_ENABLED": app.config.DISCOVERY_SERVICE_ENABLED,
+        "DISCOVERY_SERVICE_TYPE": app.config.DISCOVERY_SERVICE_TYPE,
+        "SERVICE_TRANSPORT_SCHEME": app.config.SERVICE_TRANSPORT_SCHEME,
+        "APP_NAME": app.config.APP_NAME,
+    }
+    from aduib_rpc.discover.registry.registry_factory import ServiceRegistryFactory
+    service = await ServiceRegistryFactory.start_service_registry(registry_config)
+    from aduib_rpc.discover.service import AduibServiceFactory
+    factory = AduibServiceFactory(service_instance=service)
+    await factory.run_server()
+
 
 @contextlib.asynccontextmanager
 async def lifespan(app: AduibAIApp) -> AsyncIterator[None]:
     log.info("Lifespan is starting")
+    #服务注册
+    asyncio.create_task(run_service_register(app))
     from component.crawl4ai.crawler_pool import close_all, janitor
     # --- 初始化 ---
     # 预热 crawler
