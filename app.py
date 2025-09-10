@@ -33,7 +33,7 @@ async def run_mcp_server(**kwargs):
     app.mcp = mcp
     init_crawler_pool(app)
     app_context.set(app)
-    mcp_factory.mount_mcp_app(app)
+    await mcp_factory.mount_mcp_app(app)
     config = uvicorn.Config(app=app, host=app.config.APP_HOST, port=app.config.APP_PORT, **kwargs)
     await uvicorn.Server(config).serve()
 

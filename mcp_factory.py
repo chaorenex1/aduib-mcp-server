@@ -61,7 +61,7 @@ class MCPFactory:
         else:
             log.error(f"Unsupported TRANSPORT_TYPE: {config.TRANSPORT_TYPE}")
 
-    def mount_mcp_app(self,app):
+    async def mount_mcp_app(self,app):
         from mcp_service import load_mcp_plugins
         load_mcp_plugins("mcp_service")
         if config.TRANSPORT_TYPE == "stdio":
@@ -70,3 +70,7 @@ class MCPFactory:
             app.mount("/", app.mcp.sse_app(), name="mcp_see")
         elif config.TRANSPORT_TYPE == "streamable-http":
             app.mount("/", app.mcp.streamable_http_app(), name="mcp_streamable_http")
+
+        from nacos_mcp import NacosMCP
+        if isinstance(self.mcp, NacosMCP):
+            await self.mcp.register_service(transport=config.TRANSPORT_TYPE)

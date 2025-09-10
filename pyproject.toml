@@ -12,7 +12,7 @@ dependencies = [
     "bcrypt>=4.3.0",
     "fastapi>=0.116.1",
     "nacos-sdk-python>=2.0.1",
-    "aduib_rpc>=1.0.4",
+    "aduib_rpc>1.0.4",
     "nacos-mcp-wrapper-python",
     "psycopg2-binary>=2.9.10",
     "pydantic>=2.11.3",

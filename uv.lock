@@ -30,6 +30,8 @@ dependencies = [
 crawler = [
     { name = "crawl4ai" },
     { name = "playwright-stealth" },
+]
+yt-dlp = [
     { name = "yt-dlp" },
 ]
 
@@ -41,7 +43,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "aduib-rpc", specifier = ">=1.0.4" },
+    { name = "aduib-rpc", specifier = ">1.0.4" },
     { name = "bcrypt", specifier = ">=4.3.0" },
     { name = "crawl4ai", marker = "extra == 'crawler'" },
     { name = "fastapi", specifier = ">=0.116.1" },
@@ -56,9 +58,9 @@ requires-dist = [
     { name = "redis", specifier = ">=6.4.0" },
     { name = "sqlalchemy", specifier = "==2.0.39" },
     { name = "uvicorn", specifier = ">=0.34.2" },
-    { name = "yt-dlp", marker = "extra == 'crawler'" },
+    { name = "yt-dlp", marker = "extra == 'yt-dlp'" },
 ]
-provides-extras = ["crawler"]
+provides-extras = ["crawler", "yt-dlp"]
 
 [package.metadata.requires-dev]
 dev = [
@@ -68,7 +70,7 @@ dev = [
 
 [[package]]
 name = "aduib-rpc"
-version = "1.0.4"
+version = "1.0.7"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "cryptography" },
@@ -82,10 +84,11 @@ dependencies = [
     { name = "pydantic" },
     { name = "sse-starlette" },
     { name = "starlette" },
+    { name = "thrift" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/68/92/8f6ae3f6094e7524a088a4ef0baf22f49048043c80b644d51b71886d0304/aduib_rpc-1.0.4.tar.gz", hash = "sha256:d27c6ae587f9f9665e30e7d3e40a0320cb519995cbfa970e579e1d97abbe7873", size = 119471 }
+sdist = { url = "https://files.pythonhosted.org/packages/9f/50/199112964c5e0de614c88877ffba4694b3eddaec3cabda8a6a51979b2618/aduib_rpc-1.0.7.tar.gz", hash = "sha256:8e8a1e0ec4fedb4a920c2b196d85952e6c3a91d5f0da44da4d1089972374e14a", size = 132750 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/42/8a/ef8434af943289b6ec98acaca836b47a827bc73ee31d39026f0777288931/aduib_rpc-1.0.4-py3-none-any.whl", hash = "sha256:57218b373c99abe4be79cd4bfaed4bb67a0cef36b7786289847bd5828e97e148", size = 66283 },
+    { url = "https://files.pythonhosted.org/packages/bd/be/3307ae693a30f3a924cd33fa48ce47dd38f009ea9484e84f3d6673bd1fc6/aduib_rpc-1.0.7-py3-none-any.whl", hash = "sha256:f771e56555f90c203ef10f8779c2681701b12a4301a441f8226fdd95b7fae319", size = 84778 },
 ]
 
 [[package]]
@@ -2257,6 +2260,12 @@ sdist = { url = "https://files.pythonhosted.org/packages/d6/6b/32bb58c65991f91ae
 wheels = [
     { url = "https://files.pythonhosted.org/packages/11/3d/2653f4cf49660bb44eeac8270617cc4c0287d61716f249f55053f0af0724/tf_playwright_stealth-1.2.0-py3-none-any.whl", hash = "sha256:26ee47ee89fa0f43c606fe37c188ea3ccd36f96ea90c01d167b768df457e7886", size = 33151 },
 ]
+
+[[package]]
+name = "thrift"
+version = "0.22.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/b2/c2/db648cc10dd7d15560f2eafd92a27cd280811924696e0b4a87175fb28c94/thrift-0.22.0.tar.gz", hash = "sha256:42e8276afbd5f54fe1d364858b6877bc5e5a4a5ed69f6a005b94ca4918fe1466", size = 62303 }
 
 [[package]]
 name = "tiktoken"
