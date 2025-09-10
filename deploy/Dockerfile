@@ -40,7 +40,7 @@ RUN pip install --no-cache-dir uv \
 
 # 复制项目源码
 COPY . .
-RUN chmod +x /app/deploy/aduib_mcp_server.venv.sh
+RUN chmod +x /app/deploy/aduib_mcp_server.sh
 
 # 确保日志目录存在
 RUN mkdir -p /app/logs
@@ -49,4 +49,4 @@ RUN mkdir -p /app/logs
 EXPOSE 5002
 
 # 启动命令：假设 FastAPI app 在 aduib_mcp_server.app:app
-CMD ["/app/deploy/aduib_mcp_server.venv.sh"]
+CMD ["/app/deploy/aduib_mcp_server.sh"]
