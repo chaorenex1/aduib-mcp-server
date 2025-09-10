@@ -72,12 +72,12 @@ mkdir -p "${LOG_HOST_DIR}"
 # 运行新容器
 log "启动容器 ${CONTAINER_NAME}"
 docker run -d \
-  --restart=unless-stopped \
   --env-file ${WORK_DIR}/.env.production \
   --name "${CONTAINER_NAME}" \
   --restart unless-stopped \
   -p "${PORT}:${EXPOSED_PORT}" \
   -v "${LOG_HOST_DIR}:/app/logs" \
+  -v /home/zzh/.cache/ms-playwright:/root/.cache/ms-playwright \
   "${IMAGE_TAG}"
 
 # 等待并检查容器状态
