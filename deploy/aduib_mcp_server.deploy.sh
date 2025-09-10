@@ -46,7 +46,17 @@ fi
 
 # 获取当前提交短哈希作为镜像标签
 GIT_SHA=$(git rev-parse --short HEAD)
+# 上一次成功部署的镜像标签（可选）
+LAST_DEPLOYED_SHA=$(git rev-parse --short HEAD@{1} || echo "none")
 IMAGE_TAG="${IMAGE_NAME}:${GIT_SHA}"
+LAST_IMAGE_TAG="${IMAGE_NAME}:${LAST_DEPLOYED_SHA}"
+if docker images --format '{{.Repository}}:{{.Tag}}' | grep -q "^${LAST_IMAGE_TAG}$"; then
+  log "上一次部署的镜像标签 ${LAST_IMAGE_TAG} 存在, 删除旧镜像"
+  docker rmi "${LAST_IMAGE_TAG}" || true
+else
+  LAST_IMAGE_TAG="none"
+  log "未找到上一次部署的镜像标签"
+fi
 log "当前提交 ${GIT_SHA}，镜像标签 ${IMAGE_TAG}"
 
 # 停止并删除旧容器（如果存在）
