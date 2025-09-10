@@ -55,6 +55,4 @@ if [ ! -d "$HOME/.cache/ms-playwright" ]; then
 fi
 export PYTHONUNBUFFERED=1
 export PYTHONPATH="${WORK_DIR}"
-nohup .venv/bin/python app.py > /dev/null 2>&1 &
-# 输出进程号
-echo "${PROJECT_NAME}脚本已后台运行，PID: $!"
+.venv/bin/python app.py
