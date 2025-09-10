@@ -1,6 +1,6 @@
 # dockerfile
-FROM mcr.microsoft.com/playwright:v1.55.0-noble
-
+FROM mcr.microsoft.com/playwright:v1.55.0-noble AS base
+FROM python:3.12-slim
 # 基本设置
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONPATH=/app
