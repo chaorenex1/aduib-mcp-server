@@ -1,6 +1,6 @@
 from .api_key import generate_api_key, verify_api_key, hash_api_key
 from .async_utils import AsyncUtils, CountDownLatch
-from .encoders import jsonable_encoder,merge_dicts,normalize_chinese_text
+from .encoders import jsonable_encoder,merge_dicts,normalize_chinese_text,decode_unicode_escape
 from .module_import_helper import (
     get_subclasses_from_module,
     load_single_subclass_from_source,
@@ -24,6 +24,7 @@ __all__ = [
     "jsonable_encoder",
     "merge_dicts",
     "normalize_chinese_text",
+    "decode_unicode_escape",
     "RateLimit",
     "load_yaml_file",
     "load_yaml_files",

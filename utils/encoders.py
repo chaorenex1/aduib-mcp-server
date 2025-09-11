@@ -242,3 +242,8 @@ def normalize_chinese_text(text: str) -> str:
     text = text.replace(' ', '%20').replace('　', '%20')
 
     return text.lower()
+
+def decode_unicode_escape(s: str) -> str:
+    """解码包含 Unicode 转义序列的字符串"""
+    # 示例字符串，包含 Unicode 转义序列
+    return s.encode('utf-8').decode('unicode-escape')

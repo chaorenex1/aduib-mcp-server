@@ -15,8 +15,7 @@ from crawl4ai import (
     CrawlerRunConfig,
     CacheMode,
     BrowserConfig,
-    MemoryAdaptiveDispatcher,
-    RateLimiter
+    RateLimiter, SemaphoreDispatcher
 )
 from fastapi import HTTPException, status
 from fastapi.background import BackgroundTasks
@@ -139,7 +138,6 @@ class Crawl4AIService:
             crawler_config: dict,
             query: list[str] | str = None,
             stream: bool = False,
-            notify_url: str = None
     ) -> None | AsyncGenerator[str, None] | dict[str, bool | list[Any] | float | None | int]:
         """Handle non-streaming crawl requests."""
         start_mem_mb = cls._get_memory_mb()  # <--- Get memory before
@@ -152,7 +150,7 @@ class Crawl4AIService:
                 ("raw:", "raw://")) else url for url in urls]
             browser_config = BrowserConfig.load(browser_config)
             crawler_config = CrawlerRunConfig.load(crawler_config)
-            crawler_config.cache_mode = CacheMode.BYPASS
+            crawler_config.cache_mode = CacheMode.ENABLED
             crawler_config.stream = stream
 
             from configs.crawl4ai.crawl_rule import CrawlRules
@@ -173,8 +171,8 @@ class Crawl4AIService:
                 crawler_config.extraction_strategy=crawl_rule.get_extraction_strategy()
                 crawler_config.extraction_strategy.instruction.format(web_content=query)
 
-            dispatcher = MemoryAdaptiveDispatcher(
-                memory_threshold_percent=config.MEMORY_THRESHOLD_PRECENT,
+            dispatcher = SemaphoreDispatcher(
+                semaphore_count=config.SEMAPHORE_COUNT,
                 rate_limiter=RateLimiter(
                     base_delay=config.RATE_LIMITER_BASE_DELAY,
                 ) if config.RATE_LIMITER_ENABLED else None
@@ -283,16 +281,15 @@ class Crawl4AIService:
         data = None
         result_dict = result.model_dump()
         if crawl_rule.crawl_result_type == CrawlResultType.MARKDOWN:
-            if result_dict.get('markdown') is not None and result_dict.get('markdown').get('fit_markdown') is not None:
+            if result_dict.get('markdown') is not None and result_dict.get('markdown').get('fit_markdown') is not None and result_dict.get('markdown').get('fit_markdown') != '':
                 data = result_dict['markdown']['fit_markdown']
-            elif result_dict.get('markdown') is not None and result_dict.get('markdown').get(
-                    'raw_markdown') is not None:
+            else:
                 data = result_dict['markdown']['raw_markdown']
         elif crawl_rule.crawl_result_type == CrawlResultType.PDF:
-            if result_dict.get('pdf') is not None:
+            if result_dict.get('pdf') is not None and result_dict.get('pdf') != '':
                 data = b64encode(result_dict['pdf']).decode('utf-8')
         else:  # HTML
-            if result_dict.get('cleaned_html') is not None:
+            if result_dict.get('cleaned_html') is not None and crawler_config.clean_html!='':
                 data = result_dict['cleaned_html']
             else:
                 data = result_dict.get('fit_html')
@@ -339,8 +336,7 @@ class Crawl4AIService:
                     browser_config=browser_config,
                     crawler_config=crawler_config,
                     query=query,
-                    stream=stream,
-                    notify_url=notify_url
+                    stream=stream
                 )
                 redis.hset(f"aduib_task:{task_id}", mapping={
                     "status": TaskStatus.COMPLETED,

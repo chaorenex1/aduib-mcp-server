@@ -54,7 +54,7 @@ async def crawl_stream_job(
     else:
         payload.crawler_config = merge_dicts(crawler_config, payload.crawler_config)
     content = await Crawl4AIService.handle_crawl_request([str(u) for u in payload.urls], payload.browser_config,
-                                                         payload.crawler_config, payload.query, payload.stream, )
+                                                         payload.crawler_config, payload.query, payload.stream)
     # result=json.dumps(content).encode('utf-8')
     if not isinstance(content, AsyncGenerator):
         return CrawlJobResponse.model_validate(content)

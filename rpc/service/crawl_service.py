@@ -2,8 +2,8 @@ import asyncio
 from typing import Any
 
 from aduib_rpc.server.request_excution.service_call import service
-from fastapi import BackgroundTasks
 
+from configs.crawl4ai.crawl_rule import browser_config, crawler_config
 from controllers.params import CrawlJobResponse, WebEngineCrawlJobPayload
 from service.crawl4ai_service import Crawl4AIService
 
@@ -11,15 +11,13 @@ from service.crawl4ai_service import Crawl4AIService
 @service("CrawlService")
 class CrawlService:
     """Crawl Service for handling crawl requests."""
-    async def crawl(self, urls:list[str],notify_url:str=None) -> dict[str, Any]:
+    async def crawl(self, urls:list[str], query:str=None) -> dict[str, Any]:
         # Implement crawling logic here
-        background_tasks = BackgroundTasks()
-        return await Crawl4AIService.handle_crawl_job(
-            background_tasks=background_tasks,
+        return await Crawl4AIService.handle_crawl_request(
             urls=urls,
-            browser_config={},
-            crawler_config={},
-            notify_url=notify_url
+            browser_config=browser_config,
+            crawler_config=crawler_config,
+            query=query
         )
 
 
