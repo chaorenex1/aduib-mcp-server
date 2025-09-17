@@ -57,7 +57,7 @@ web_content_llm_extraction_strategy = LLMExtractionStrategy(
                          api_token=config.CRAWLER_API_KEY, temperature=0.01),
     schema=WebSearchContentExtractionResult.model_json_schema(),  # Or use model_json_schema()
     extraction_type="schema",
-    instruction="extraction: {web_content}",
+    instruction="""Extract the main content from the texts with 'title', 'url', 'description' and any other relevant fields. Avoid including navigation elements, advertisements, or unrelated content.""",
     chunk_token_threshold=4096,
     overlap_rate=0.0,
     apply_chunking=True,
@@ -160,6 +160,27 @@ class CrawlRules(BaseSettings):
                 "url": "github.com",
                 "crawl_mode": "classic",
                 "css_selector": "div.Box-sc-g0xbh4-0",
+                "crawl_result_type": "markdown",
+                "extraction_strategy": "web_content",
+                "filter_type":"fit"
+            },
+            {
+                "name": "gitlab",
+                "url": "gitlab.com",
+                "crawl_mode": "classic",
+                "crawl_result_type": "markdown",
+                "filter_type":"fit"
+            }
+        ]
+    },{
+        "name": "git_repo_search",
+        "rules": [
+            {
+                "name": "github",
+                "url": "github.com",
+                "crawl_mode": "classic",
+                "css_selector": "div.Box-sc-g0xbh4-0 flszRz h3, div.Box-sc-g0xbh4-0 flszRz span, div.Box-sc-g0xbh4-0 flszRz a, div.Box-sc-g0xbh4-0 flszRz ul",
+                "search_engine_url": "https://github.com/search?q={query}&type={type}&p={page}&s=stars&o=desc",
                 "crawl_result_type": "markdown",
                 "filter_type":"fit"
             },

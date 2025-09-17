@@ -22,7 +22,7 @@ from fastapi.background import BackgroundTasks
 from fastapi.responses import JSONResponse
 
 from component.cache.redis_cache import redis_client as redis
-from component.crawl4ai.crawler_pool import get_rule_by_url, get_rules_by_group
+from component.crawl4ai.crawler_pool import get_rule_by_url, get_rules_by_group, get_rule_by_group_and_url
 from configs import config
 from configs.crawl4ai.crawl_rule import browser_config as default_browser_config, \
     crawler_config as default_crawler_config
@@ -138,6 +138,7 @@ class Crawl4AIService:
             crawler_config: dict,
             query: list[str] | str = None,
             stream: bool = False,
+            rule_group: str = None
     ) -> None | AsyncGenerator[str, None] | dict[str, bool | list[Any] | float | None | int]:
         """Handle non-streaming crawl requests."""
         start_mem_mb = cls._get_memory_mb()  # <--- Get memory before
@@ -154,7 +155,12 @@ class Crawl4AIService:
             crawler_config.stream = stream
 
             from configs.crawl4ai.crawl_rule import CrawlRules
-            crawl_rule = get_rule_by_url(urls[0])
+
+            crawl_rule=None
+            if rule_group:
+                crawl_rule = get_rule_by_group_and_url(rule_group, urls[0])
+            else:
+                crawl_rule = get_rule_by_url(urls[0])
             logger.debug(f"Matched crawl rule: {crawl_rule}")
 
             if crawl_rule.css_selector:
@@ -300,6 +306,7 @@ class Crawl4AIService:
             "crawl_media": result_dict.get('media', {}),
             "screenshot": result_dict.get('screenshot') if crawler_config.screenshot else "",
             "metadata": result_dict.get('metadata', {}),
+            "hit_rule": crawl_rule.name if crawl_rule else "default",
         }
 
     @classmethod

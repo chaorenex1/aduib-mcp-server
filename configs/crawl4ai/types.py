@@ -201,4 +201,4 @@ class WebSearchContentExtractionResult(BaseModel):
     title: str
     url: str
     description: str
-    summary: str = None
+    metadata: dict[str, str]

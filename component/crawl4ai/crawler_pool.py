@@ -69,6 +69,16 @@ def get_rules_by_group(group_name:str)->CrawlRuleGroup |None:
             return group
     return None
 
+def get_rule_by_group_and_url(group_name:str, url: str) -> CrawlRule | None:
+    """Get crawl rule by matching domain name from URL within a specific group."""
+    group = get_rules_by_group(group_name)
+    if group is None:
+        return None
+    for rule in group.rules:
+        if rule.url == get_domain_url(url):
+            return rule
+    return None
+
 
 def change_crawl_rule(new_rules: list[dict]):
     """Change the current crawl rules to new ones."""
