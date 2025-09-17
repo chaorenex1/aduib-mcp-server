@@ -52,16 +52,16 @@ fi
 
 # 获取当前提交短哈希作为镜像标签
 GIT_SHA=$(git rev-parse --short HEAD)
-# 上一次成功部署的镜像标签（可选）
-LAST_DEPLOYED_SHA=$(git rev-parse --short HEAD@{1} || echo "none")
+
 IMAGE_TAG="${IMAGE_NAME}:${GIT_SHA}"
-LAST_IMAGE_TAG="${IMAGE_NAME}:${LAST_DEPLOYED_SHA}"
-if docker images --format '{{.Repository}}:{{.Tag}}' | grep -q "^${LAST_IMAGE_TAG}$"; then
-  log "上一次部署的镜像标签 ${LAST_IMAGE_TAG} 存在, 删除旧镜像"
-  docker rmi "${LAST_IMAGE_TAG}" || true
+LAST_IMAGE_TAG="${IMAGE_NAME}"
+# 删除所有旧镜像
+OLD_IMAGES=$(docker images --format '{{.Repository}}:{{.Tag}}' | grep "^${LAST_IMAGE_TAG}:")
+if [ -n "$OLD_IMAGES" ]; then
+  log "发现旧镜像，开始删除："
+  echo "$OLD_IMAGES" | xargs -r docker rmi || true
 else
-  LAST_IMAGE_TAG="none"
-  log "未找到上一次部署的镜像标签"
+  log "未找到旧镜像"
 fi
 log "当前提交 ${GIT_SHA}，镜像标签 ${IMAGE_TAG}"
 
@@ -72,12 +72,6 @@ if docker ps -a --format '{{.Names}}' | grep -q "^${CONTAINER_NAME}$"; then
   docker rm "${CONTAINER_NAME}" || true
 else
   warn "未找到名为 ${CONTAINER_NAME} 的容器"
-fi
-
-# 可选：删除同名旧镜像（不删除会保留历史镜像）
-if docker images --format '{{.Repository}}:{{.Tag}}' | grep -q "^${IMAGE_NAME}:"; then
-  log "清理同名镜像（保留其它标签）"
-  # docker rmi "${IMAGE_NAME}:latest" || true
 fi
 
 # 构建新镜像
