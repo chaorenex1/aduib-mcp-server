@@ -13,13 +13,12 @@ WORKDIR /app
 COPY pyproject.toml uv.lock* .env.production ./
 
 # 安装 uv 包管理器并使用 uv 安装依赖（只安装非 dev 依赖）
-RUN  pip install --upgrade pip \
-     && pip install . -i https://mirrors.aliyun.com/pypi/simple/ --trusted-host mirrors.aliyun.com
+RUN  pip install uv \
+    && uv venv \
+    && uv sync --extra crawler \
 
 # 复制项目源码
 COPY . .
 
-# 确保日志目录存在
-RUN mkdir -p /app/logs
-
-ENTRYPOINT ["python","app.py"]
+ENTRYPOINT ["source", "/app/.venv/bin/activate"]
+CMD ["python", "app.py"]
