@@ -4,6 +4,7 @@ PROJECT_NAME="aduib-mcp-server"
 REPO_URL="https://github.com/chaorenex1/aduib-mcp-server.git"
 BRANCH="main"
 CONTAINER_NAME="${PROJECT_NAME}-app"
+BASE_IMAGE_NAME="aduib-mcp-server-base"
 IMAGE_NAME="${PROJECT_NAME}"
 cd ".."
 WORK_DIR=$(pwd)
@@ -42,7 +43,12 @@ else
 fi
 
 #调用aduib_mcp_server_base.sh构建基础镜像
-bash ./deploy/aduib_mcp_server_base.sh
+if ! docker images --format '{{.Repository}}:{{.Tag}}' | grep -q "^${BASE_IMAGE_NAME}:"; then
+  log "基础镜像 ${BASE_IMAGE_NAME} 不存在，开始构建"
+  bash ./deploy/aduib_mcp_server_base.sh
+else
+  log "基础镜像 ${BASE_IMAGE_NAME} 已存在，跳过构建"
+fi
 
 # 获取当前提交短哈希作为镜像标签
 GIT_SHA=$(git rev-parse --short HEAD)

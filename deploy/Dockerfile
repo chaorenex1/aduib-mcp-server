@@ -9,28 +9,6 @@ ENV DOCKER_ENV=true
 ENV APP_HOST=10.0.0.96
 WORKDIR /app
 
-RUN \
-  echo "INFO: Attempting to switch main Debian APT sources to mirrors.aliyun.com..." && \
-  if [ -f /etc/apt/sources.list.d/debian.sources ]; then \
-    echo "INFO: Modifying /etc/apt/sources.list.d/debian.sources" && \
-    sed -i 's|http://deb.debian.org|http://mirrors.aliyun.com|g' /etc/apt/sources.list.d/debian.sources && \
-    sed -i 's|http://security.debian.org|http://mirrors.aliyun.com|g' /etc/apt/sources.list.d/debian.sources; \
-  elif [ -f /etc/apt/sources.list ]; then \
-    echo "INFO: Modifying /etc/apt/sources.list" && \
-    sed -i 's|http://deb.debian.org|http://mirrors.aliyun.com|g' /etc/apt/sources.list && \
-    sed -i 's|http://security.debian.org|http://mirrors.aliyun.com|g' /etc/apt/sources.list && \
-    sed -i 's|http://archive.ubuntu.com|http://mirrors.aliyun.com|g' /etc/apt/sources.list; \
-  else \
-    echo "WARNING: Standard Debian/Ubuntu APT source files not found in expected locations."; \
-  fi && \
-  echo "INFO: APT sources modification complete."
-# 安装系统依赖（用于编译扩展，如 psycopg2）
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
-    gcc \
-    libpq-dev \
-    && rm -rf /var/lib/apt/lists/*
-
 # 先复制依赖描述文件以利用缓存
 COPY pyproject.toml uv.lock* .env.production ./
 
