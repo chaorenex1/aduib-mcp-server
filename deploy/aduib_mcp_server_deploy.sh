@@ -25,7 +25,7 @@ log() { echo -e "${GREEN}[INFO]${NC} $*"; }
 warn() { echo -e "${YELLOW}[WARN]${NC} $*"; }
 err() { echo -e "${RED}[ERROR]${NC} $*"; }
 
-trap 'err "部署失败"; exit 1' ERR
+#trap 'err "部署失败"; exit 1' ERR
 
 log "开始部署 ${PROJECT_NAME}"
 
