@@ -14,7 +14,7 @@ COPY pyproject.toml uv.lock* .env.production ./
 
 # 安装 uv 包管理器并使用 uv 安装依赖（只安装非 dev 依赖）
 RUN  pip install --upgrade pip \
-     && pip install . -i https://pypi.org/simple
+     && pip install . -i https://mirrors.aliyun.com/pypi/simple/ --trusted-host mirrors.aliyun.com
 
 # 复制项目源码
 COPY . .
