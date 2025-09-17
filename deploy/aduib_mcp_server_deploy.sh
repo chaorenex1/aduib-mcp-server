@@ -3,9 +3,11 @@
 PROJECT_NAME="aduib-mcp-server"
 REPO_URL="https://github.com/chaorenex1/aduib-mcp-server.git"
 BRANCH="main"
-WORK_DIR="./${PROJECT_NAME}"
 CONTAINER_NAME="${PROJECT_NAME}-app"
 IMAGE_NAME="${PROJECT_NAME}"
+cd ".."
+WORK_DIR=$(pwd)
+
 LOG_HOST_DIR="${WORK_DIR}/logs"
 PORT=5002
 EXPOSED_PORT=5002
@@ -24,12 +26,7 @@ err() { echo -e "${RED}[ERROR]${NC} $*"; }
 
 trap 'err "部署失败"; exit 1' ERR
 
-log "开始部署 ${PROJECT_NAME} 到 ${WORK_DIR}"
-
-# 创建工作目录并切换
-sudo mkdir -p "${WORK_DIR}"
-sudo chown -R "$(id -u):$(id -g)" "${WORK_DIR}" || true
-cd "${WORK_DIR}"
+log "开始部署 ${PROJECT_NAME}"
 
 # 克隆或更新代码
 if [ -d ".git" ]; then
@@ -43,6 +40,9 @@ else
   rm -rf ./*
   git clone --branch "${BRANCH}" "${REPO_URL}" .
 fi
+
+#调用aduib_mcp_server_base.sh构建基础镜像
+bash ./deploy/aduib_mcp_server_base.sh
 
 # 获取当前提交短哈希作为镜像标签
 GIT_SHA=$(git rev-parse --short HEAD)
