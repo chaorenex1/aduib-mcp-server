@@ -56,7 +56,7 @@ if docker ps -a --format '{{.Names}}' | grep -q "^${CONTAINER_NAME}$"; then
   docker stop "${CONTAINER_NAME}" || true
   docker rm "${CONTAINER_NAME}" || true
 else
-  warn "未找到名为 ${CONTAINER_NAME} 的容器"
+  log "未找到名为 ${CONTAINER_NAME} 的容器"
 fi
 
 # 获取当前提交短哈希作为镜像标签
