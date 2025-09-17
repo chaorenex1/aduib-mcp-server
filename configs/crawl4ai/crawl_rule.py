@@ -14,7 +14,7 @@ browser_config={
         # "cdp_url": "ws://127.0.0.1:9223/devtools/browser/66ec7438-df8a-44be-a6b4-7ee3aa9d889b",
         "text_mode": False,
         "headless": True,
-        "enable_stealth": True,
+        "enable_stealth": False,
         # "proxy_config": {
         #     "server": "",
         #     "username": "",
@@ -160,15 +160,14 @@ class CrawlRules(BaseSettings):
                 "url": "github.com",
                 "crawl_mode": "classic",
                 "css_selector": "div.Box-sc-g0xbh4-0",
-                "crawl_result_type": "markdown",
-                "extraction_strategy": "web_content",
+                "crawl_result_type": "html",
                 "filter_type":"fit"
             },
             {
                 "name": "gitlab",
                 "url": "gitlab.com",
                 "crawl_mode": "classic",
-                "crawl_result_type": "markdown",
+                "crawl_result_type": "html",
                 "filter_type":"fit"
             }
         ]
@@ -179,16 +178,17 @@ class CrawlRules(BaseSettings):
                 "name": "github",
                 "url": "github.com",
                 "crawl_mode": "classic",
-                "css_selector": "div.Box-sc-g0xbh4-0 flszRz h3, div.Box-sc-g0xbh4-0 flszRz span, div.Box-sc-g0xbh4-0 flszRz a, div.Box-sc-g0xbh4-0 flszRz ul",
+                "css_selector": "div.Box-sc-g0xbh4-0.gPrlij h3, div.Box-sc-g0xbh4-0.dcdlju > span, div.Box-sc-g0xbh4-0.gPrlij a, div.Box-sc-g0xbh4-0.gPrlij > ul",
                 "search_engine_url": "https://github.com/search?q={query}&type={type}&p={page}&s=stars&o=desc",
-                "crawl_result_type": "markdown",
+                "crawl_result_type": "html",
+                "extraction_strategy": "web_content",
                 "filter_type":"fit"
             },
             {
                 "name": "gitlab",
                 "url": "gitlab.com",
                 "crawl_mode": "classic",
-                "crawl_result_type": "markdown",
+                "crawl_result_type": "html",
                 "filter_type":"fit"
             }
         ]

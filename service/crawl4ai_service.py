@@ -286,19 +286,23 @@ class Crawl4AIService:
     async def create_processed_result(cls,crawler_config, crawl_rule: CrawlRule | None, result) -> Any:
         data = None
         result_dict = result.model_dump()
-        if crawl_rule.crawl_result_type == CrawlResultType.MARKDOWN:
-            if result_dict.get('markdown') is not None and result_dict.get('markdown').get('fit_markdown') is not None and result_dict.get('markdown').get('fit_markdown') != '':
-                data = result_dict['markdown']['fit_markdown']
-            else:
-                data = result_dict['markdown']['raw_markdown']
-        elif crawl_rule.crawl_result_type == CrawlResultType.PDF:
-            if result_dict.get('pdf') is not None and result_dict.get('pdf') != '':
-                data = b64encode(result_dict['pdf']).decode('utf-8')
-        else:  # HTML
-            if result_dict.get('cleaned_html') is not None and crawler_config.clean_html!='':
-                data = result_dict['cleaned_html']
-            else:
-                data = result_dict.get('fit_html')
+        if result_dict.get('extracted_content'):
+            data = result_dict['extracted_content']
+        else:
+            if crawl_rule.crawl_result_type == CrawlResultType.MARKDOWN:
+                if result_dict.get('markdown') is not None and result_dict.get('markdown').get('fit_markdown') is not None and result_dict.get('markdown').get('fit_markdown') != '':
+                    data = result_dict['markdown']['fit_markdown']
+                else:
+                    data = result_dict['markdown']['raw_markdown']
+            elif crawl_rule.crawl_result_type == CrawlResultType.PDF:
+                if result_dict.get('pdf') is not None and result_dict.get('pdf') != '':
+                    data = b64encode(result_dict['pdf']).decode('utf-8')
+            else:  # HTML
+                if result_dict.get('cleaned_html') is not None and crawler_config.clean_html!='':
+                    data = result_dict['cleaned_html']
+                else:
+                    data = result_dict.get('fit_html')
+
         return {
             "url": result_dict.get('url', ''),
             "crawl_text": data,

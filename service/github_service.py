@@ -8,7 +8,7 @@ from utils import merge_dicts
 class GitHubService:
 
     @classmethod
-    async def search_repositories(cls, repo_name: str= "", code_snippet: str= "", issue_snippet: str= "", pages: int=5) -> str:
+    async def search_repositories(cls, repo_name: str= "", code_snippet: str= "", issue_snippet: str= "", pages: int=2) -> str:
 
         rule:CrawlRule = CrawlRules.get_rule_by_name("git_repo_search", "github")
 
