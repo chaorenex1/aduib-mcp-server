@@ -1,7 +1,7 @@
 import asyncio
 from typing import Any
 
-from aduib_rpc.server.request_excution.service_call import service
+from aduib_rpc.server.rpc_execution.service_call import service
 
 from configs.crawl4ai.crawl_rule import browser_config, crawler_config
 from controllers.params import CrawlJobResponse, WebEngineCrawlJobPayload
