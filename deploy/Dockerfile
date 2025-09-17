@@ -19,5 +19,4 @@ RUN  pip install uv \
     && uv venv \
     && uv sync --frozen --no-dev --extra crawler
 
-ENTRYPOINT ["source", "/app/.venv/bin/activate"]
-CMD ["python", "app.py"]
+ENTRYPOINT [".venv/bin/python", "app.py"]
