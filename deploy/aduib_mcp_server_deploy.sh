@@ -50,6 +50,15 @@ else
   log "基础镜像 ${BASE_IMAGE_NAME} 已存在，跳过构建"
 fi
 
+# 停止并删除旧容器（如果存在）
+if docker ps -a --format '{{.Names}}' | grep -q "^${CONTAINER_NAME}$"; then
+  log "停止并移除旧容器 ${CONTAINER_NAME}"
+  docker stop "${CONTAINER_NAME}" || true
+  docker rm "${CONTAINER_NAME}" || true
+else
+  warn "未找到名为 ${CONTAINER_NAME} 的容器"
+fi
+
 # 获取当前提交短哈希作为镜像标签
 GIT_SHA=$(git rev-parse --short HEAD)
 
@@ -64,15 +73,6 @@ else
   log "未找到旧镜像"
 fi
 log "当前提交 ${GIT_SHA}，镜像标签 ${IMAGE_TAG}"
-
-# 停止并删除旧容器（如果存在）
-if docker ps -a --format '{{.Names}}' | grep -q "^${CONTAINER_NAME}$"; then
-  log "停止并移除旧容器 ${CONTAINER_NAME}"
-  docker stop "${CONTAINER_NAME}" || true
-  docker rm "${CONTAINER_NAME}" || true
-else
-  warn "未找到名为 ${CONTAINER_NAME} 的容器"
-fi
 
 # 构建新镜像
 log "构建镜像 ${IMAGE_TAG}"

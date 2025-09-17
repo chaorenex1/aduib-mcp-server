@@ -1,5 +1,5 @@
 # dockerfile
-FROM python:3.12-slim
+FROM aduib-mcp-server-base:latest
 
 # 基本设置
 ENV PYTHONUNBUFFERED=1
