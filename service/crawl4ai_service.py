@@ -298,7 +298,7 @@ class Crawl4AIService:
                 if result_dict.get('pdf') is not None and result_dict.get('pdf') != '':
                     data = b64encode(result_dict['pdf']).decode('utf-8')
             else:  # HTML
-                if result_dict.get('cleaned_html') is not None and crawler_config.clean_html!='':
+                if result_dict.get('cleaned_html') is not None and crawler_config.get('cleaned_html')!='':
                     data = result_dict['cleaned_html']
                 else:
                     data = result_dict.get('fit_html')
