@@ -13,14 +13,12 @@ WORKDIR /app
 COPY pyproject.toml uv.lock* .env.production ./
 
 # 安装 uv 包管理器并使用 uv 安装依赖（只安装非 dev 依赖）
-RUN uv venv .venv \
-    && uv sync --frozen --no-dev --extra crawler
+RUN pip install .
 
 # 复制项目源码
 COPY . .
-RUN chmod +x /app/deploy/aduib_mcp_server.sh
 
 # 确保日志目录存在
 RUN mkdir -p /app/logs
 
-ENTRYPOINT ["/app/.venv/bin/python","app.py"]
+ENTRYPOINT ["python","app.py"]
