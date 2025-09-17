@@ -18,7 +18,17 @@ log "开始部署 ${PROJECT_NAME} 到 ${WORK_DIR}"
 
 cd "${WORK_DIR}"
 
-cp -r ".env.production" ".env"
+# 如果没有虚拟环境就创建一个
+#if [ ! -d ".venv" ]; then
+#    echo "⚡ 创建虚拟环境..."
+#    uv venv .venv
+#fi
+#cp -r ".env.production" ".env"
+#uv sync --frozen --no-dev --extra crawler
+#if [ ! -d "$HOME/.cache/ms-playwright" ]; then
+#    source .venv/bin/activate
+#    playwright install chromium --with-deps
+#fi
 export PYTHONUNBUFFERED=1
 export PYTHONPATH="${WORK_DIR}"
-python app.py
+.venv/bin/python app.py
