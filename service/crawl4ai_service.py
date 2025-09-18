@@ -114,7 +114,7 @@ class Crawl4AIService:
                     result_dict = result.model_dump()
                     result_dict['server_memory_mb'] = server_memory_mb
                     logger.info(f"Streaming result for {result_dict.get('url', 'unknown')}")
-                    data = json.dumps(cls.create_processed_result(crawler_config,crawl_rule, result), default=datetime_handler,ensure_ascii=False) + "\n"
+                    data = json.dumps(cls.create_processed_result(crawl_rule, result), default=datetime_handler, ensure_ascii=False) + "\n"
                     yield data
                 except Exception as e:
                     logger.error(f"Serialization error: {e}")
@@ -217,7 +217,7 @@ class Crawl4AIService:
                 else:
                     if not isinstance(results, AsyncGenerator):
                         for result in results:
-                            processed_results.append(await cls.create_processed_result(crawler_config,crawl_rule, result))
+                            processed_results.append(await cls.create_processed_result(crawl_rule, result))
                         return {
                             "success": True,
                             "results": processed_results,
@@ -283,7 +283,7 @@ class Crawl4AIService:
             )
 
     @classmethod
-    async def create_processed_result(cls,crawler_config, crawl_rule: CrawlRule | None, result) -> Any:
+    async def create_processed_result(cls, crawl_rule: CrawlRule | None, result) -> Any:
         data = None
         result_dict = result.model_dump()
         if result_dict.get('extracted_content'):
@@ -298,7 +298,7 @@ class Crawl4AIService:
                 if result_dict.get('pdf') is not None and result_dict.get('pdf') != '':
                     data = b64encode(result_dict['pdf']).decode('utf-8')
             else:  # HTML
-                if result_dict.get('cleaned_html') is not None and crawler_config.get('cleaned_html')!='':
+                if result_dict.get('cleaned_html') is not None and result_dict.get('cleaned_html')!='':
                     data = result_dict['cleaned_html']
                 else:
                     data = result_dict.get('fit_html')
@@ -308,7 +308,7 @@ class Crawl4AIService:
             "crawl_text": data,
             "crawl_type": CrawlResultType.value_of(crawl_rule.crawl_result_type) if crawl_rule else 'html',
             "crawl_media": result_dict.get('media', {}),
-            "screenshot": result_dict.get('screenshot') if crawler_config.screenshot else "",
+            "screenshot": result_dict.get('screenshot') if result_dict.get('screenshot') else "",
             "metadata": result_dict.get('metadata', {}),
             "hit_rule": crawl_rule.name if crawl_rule else "default",
         }
