@@ -98,7 +98,7 @@ class CrawlRules(BaseSettings):
             {
                 "name": "csdn",
                 "url": "www.csdn.net",
-                "css_selector": "div#article_content",
+                "css_selector": "div.blog-content-box",
                 "crawl_mode": "classic",
                 "crawl_result_type": "markdown",
                 "filter_type": "fit"
@@ -106,7 +106,7 @@ class CrawlRules(BaseSettings):
             {
                 "name": "blog_csdn",
                 "url": "blog.csdn.net",
-                "css_selector": "div#article_content",
+                "css_selector": "div.blog-content-box",
                 "crawl_mode": "classic",
                 "crawl_result_type": "markdown",
                 "filter_type":"fit"
@@ -114,7 +114,7 @@ class CrawlRules(BaseSettings):
             {
                 "name": "jianshu",
                 "url": "www.jianshu.com",
-                "css_selector": "div.show-content",
+                "css_selector": "div._gp-ck",
                 "crawl_mode": "classic",
                 "crawl_result_type": "markdown",
                 "filter_type": "fit"
@@ -122,7 +122,7 @@ class CrawlRules(BaseSettings):
             {
                 "name": "zhihu",
                 "url": "www.zhihu.com",
-                "css_selector": "div.Post-RichTextContainer",
+                "css_selector": "div.Post-Row-Content-left-article",
                 "crawl_mode": "classic",
                 "crawl_result_type": "markdown",
                 "filter_type": "fit"
@@ -138,7 +138,7 @@ class CrawlRules(BaseSettings):
             {
                 "name": "51cto_blog",
                 "url": "blog.51cto.com",
-                "css_selector": "div.detail-content-left",
+                "css_selector": "div.common-section.common-spacing.mb30.article-detail",
                 "crawl_mode": "classic",
                 "crawl_result_type": "markdown",
                 "filter_type": "fit"
