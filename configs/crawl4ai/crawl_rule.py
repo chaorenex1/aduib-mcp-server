@@ -98,7 +98,7 @@ class CrawlRules(BaseSettings):
             {
                 "name": "csdn",
                 "url": "www.csdn.net",
-                "css_selector": "div#blog-content-box",
+                "css_selector": "div#article_content",
                 "crawl_mode": "classic",
                 "crawl_result_type": "markdown",
                 "filter_type": "fit"
@@ -106,7 +106,7 @@ class CrawlRules(BaseSettings):
             {
                 "name": "blog_csdn",
                 "url": "blog.csdn.net",
-                "css_selector": "div#blog-content-box",
+                "css_selector": "div#article_content",
                 "crawl_mode": "classic",
                 "crawl_result_type": "markdown",
                 "filter_type":"fit"
