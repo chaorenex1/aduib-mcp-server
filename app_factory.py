@@ -125,6 +125,7 @@ async def run_service_register(app: AduibAIApp):
 
     factory = AduibServiceFactory(service_instance=service_info)
     load_service_plugins('rpc.service')
+    load_service_plugins('rpc.client')
     if service_info and config.DOCKER_ENV:
         new_service_info = ServiceInstance(service_name=service_info.service_name, host=config.RPC_SERVICE_HOST, port=service_info.port,
                                        protocol=service_info.protocol, weight=service_info.weight,
