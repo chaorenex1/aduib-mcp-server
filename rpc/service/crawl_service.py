@@ -6,6 +6,7 @@ from aduib_rpc.server.rpc_execution.service_call import service
 from configs.crawl4ai.crawl_rule import browser_config, crawler_config
 from controllers.params import CrawlJobResponse, WebEngineCrawlJobPayload
 from service.crawl4ai_service import Crawl4AIService
+from utils import merge_dicts
 
 
 @service("CrawlService")
@@ -16,7 +17,7 @@ class CrawlService:
         return await Crawl4AIService.handle_crawl_request(
             urls=urls,
             browser_config=browser_config,
-            crawler_config=crawler_config,
+            crawler_config=merge_dicts(crawler_config, {'screenshot': False}),
             query=query
         )
 
