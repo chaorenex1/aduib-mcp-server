@@ -158,8 +158,13 @@ async def lifespan(app: AduibAIApp) -> AsyncIterator[None]:
         session_manager = app.mcp.session_manager
 
     if session_manager:
-        async with session_manager.run():
-            yield
+        try:
+            async with session_manager.run():
+                yield
+        except Exception as e:
+            log.error(f"Session manager error: {e}", exc_info=True)
+            async with session_manager.run():
+                yield
     else:
         yield
 
