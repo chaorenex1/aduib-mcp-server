@@ -1,5 +1,5 @@
 # dockerfile
-FROM aduib-mcp-server-base:latest
+FROM aduib-ai-base:latest
 
 # 基本设置
 ENV PYTHONUNBUFFERED=1

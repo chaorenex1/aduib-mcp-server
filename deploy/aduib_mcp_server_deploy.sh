@@ -42,14 +42,6 @@ else
   git clone --branch "${BRANCH}" "${REPO_URL}" .
 fi
 
-#调用aduib_mcp_server_base.sh构建基础镜像
-if ! docker images --format '{{.Repository}}:{{.Tag}}' | grep -q "^${BASE_IMAGE_NAME}:"; then
-  log "基础镜像 ${BASE_IMAGE_NAME} 不存在，开始构建"
-  bash ./deploy/aduib_mcp_server_base.sh
-else
-  log "基础镜像 ${BASE_IMAGE_NAME} 已存在，跳过构建"
-fi
-
 # 停止并删除旧容器（如果存在）
 if docker ps -a --format '{{.Names}}' | grep -q "^${CONTAINER_NAME}$"; then
   log "停止并移除旧容器 ${CONTAINER_NAME}"
