@@ -176,7 +176,7 @@ async def before_return_html(
 
 
 def _sig(cfg: BrowserConfig) -> str:
-    payload = json.dumps(cfg.dump(), sort_keys=True, separators=(",", ":"))
+    payload = json.dumps({"browser_mode":cfg.browser_mode,"use_persistent_context":cfg.use_persistent_context}, sort_keys=True, separators=(",", ":"))
     return hashlib.sha1(payload.encode()).hexdigest()
 
 
