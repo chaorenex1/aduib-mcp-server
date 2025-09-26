@@ -9,7 +9,7 @@ from utils import get_domain_url
 
 browser_config={
 
-        # "use_persistent_context":False,
+        "use_persistent_context":True,
         "browser_mode":"dedicated",
         # "cdp_url": "ws://127.0.0.1:9223/devtools/browser/66ec7438-df8a-44be-a6b4-7ee3aa9d889b",
         "text_mode": False,
