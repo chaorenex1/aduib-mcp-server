@@ -141,7 +141,6 @@ async def lifespan(app: AduibAIApp) -> AsyncIterator[None]:
     log.info("Lifespan is starting")
     #服务注册
     asyncio.create_task(run_service_register(app))
-    from component.crawl4ai.crawler_pool import close_all, janitor
     # --- 初始化 ---
     # 预热 crawler
     from component.crawl4ai.crawler_pool import get_crawler
@@ -150,7 +149,7 @@ async def lifespan(app: AduibAIApp) -> AsyncIterator[None]:
     await get_crawler(BrowserConfig.load(browser_config))
 
     # 开启 janitor
-    app.state.janitor = asyncio.create_task(janitor())
+    # app.state.janitor = asyncio.create_task(janitor())
 
     # 如果是 streamable-http 模式，开启 session_manager
     session_manager = None
@@ -169,5 +168,5 @@ async def lifespan(app: AduibAIApp) -> AsyncIterator[None]:
         yield
 
     # --- 清理 ---
-    app.state.janitor.cancel()
-    await close_all()
+    # app.state.janitor.cancel()
+    # await close_all()

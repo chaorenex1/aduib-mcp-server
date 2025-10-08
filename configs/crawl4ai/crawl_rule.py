@@ -14,7 +14,7 @@ browser_config={
         # "cdp_url": "ws://127.0.0.1:9222",
         "text_mode": False,
         "headless": True,
-        "enable_stealth": False,
+        "enable_stealth": True,
         # "proxy_config": {
         #     "server": "",
         #     "username": "",
