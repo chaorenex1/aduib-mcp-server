@@ -130,9 +130,9 @@ async def run_service_register(app: AduibAIApp):
         new_service_info = ServiceInstance(service_name=service_info.service_name, host=config.RPC_SERVICE_HOST, port=service_info.port,
                                        protocol=service_info.protocol, weight=service_info.weight,
                                        scheme=service_info.scheme)
-        await service_registry.register_service(new_service_info)
+        service_registry.register_service(new_service_info)
     else:
-        await service_registry.register_service(service_info)
+        service_registry.register_service(service_info)
     await factory.run_server()
 
 
