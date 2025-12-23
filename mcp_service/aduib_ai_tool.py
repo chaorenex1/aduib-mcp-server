@@ -5,16 +5,16 @@ mcp= mcp_context.get()
 rag_service = RagService()
 
 
-@mcp.tool(name="Retrieve information from documents", description="Retrieve information from documents such as PDFs, Word documents, and text files.")
+@mcp.tool(name="Retrieve information from Doc Knowledge Base", description="Retrieve information from knowledge base documents.")
 async def retrieval_from_paragraph(query: str) -> str:
     return await rag_service.retrieval_from_paragraph(query)
 
 
-@mcp.tool(name="Retrieve information from Q&A pairs", description="Retrieve information from question and answer pairs.")
+@mcp.tool(name="Retrieve information from QA Knowledge Base", description="Retrieve information from knowledge base QA pairs.")
 async def retrieval_from_qa(query: str) -> str:
     return await rag_service.retrieval_from_qa(query)
 
 
-@mcp.tool(name="Retrieve information from browser history", description="Retrieve information from browser history within a optional time range. time format: YYYY-MM-DD HH:MM:SS")
+@mcp.tool(name="Retrieve information from My Browser History", description="Retrieve information from user's browser history within a specified time range.")
 async def retrieval_from_browser_history(query: str, start_time: str = None, end_time: str = None) -> str:
     return await rag_service.retrieval_from_browser_history(query, start_time, end_time)
