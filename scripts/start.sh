@@ -23,7 +23,7 @@ fi
 
 # 3️⃣ 安装依赖（与 Dockerfile 完全一致）
 echo "[INFO] Syncing dependencies..."
-uv sync --extra crawler && playwright install chromium --with-deps
+uv sync --extra crawler
 
 # 4️⃣ 后台启动应用
 LOG_DIR="logs"
