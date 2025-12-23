@@ -9,11 +9,11 @@ source scripts/env.sh
 
 echo "[INFO] Project root: $PROJECT_ROOT"
 
-# 1️⃣ 检查 uv
-if ! command -v uv >/dev/null 2>&1; then
-  echo "[INFO] uv not found, installing..."
-  pip install --user uv
-fi
+## 1️⃣ 检查 uv
+#if ! command -v uv >/dev/null 2>&1; then
+#  echo "[INFO] uv not found, installing..."
+#  pip install --user uv
+#fi
 
 # 2️⃣ 创建虚拟环境（若不存在）
 if [ ! -d ".venv" ]; then
