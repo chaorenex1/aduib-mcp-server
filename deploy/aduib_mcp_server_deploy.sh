@@ -68,6 +68,7 @@ docker run -d \
   -p "${PORT}:${EXPOSED_PORT}" \
   -p "${RPC_PORT}:${RPC_EXPOSED_PORT}" \
   -v "${LOG_HOST_DIR}:/app/logs" \
+  -v /home/zzh/.cache/ms-playwright:/root/.cache/ms-playwright \
   "${IMAGE_TAG}"
 
 # 等待并检查容器状态
