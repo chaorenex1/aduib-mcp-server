@@ -5,6 +5,7 @@ from concurrent import futures
 from types import CoroutineType, FunctionType
 from typing import Callable, Any
 
+import nacos
 from v2.nacos import ClientConfigBuilder, GRPCConfig, NacosConfigService, NacosNamingService, ConfigParam, \
     RegisterInstanceParam, DeregisterInstanceParam, ListInstanceParam, Instance, Service, GetServiceParam, \
     SubscribeServiceParam
