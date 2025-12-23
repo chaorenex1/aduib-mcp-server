@@ -5,24 +5,9 @@ from concurrent import futures
 from types import CoroutineType, FunctionType
 from typing import Callable, Any
 
-try:
-    import nacos
-    from v2.nacos import ClientConfigBuilder, GRPCConfig, NacosConfigService, NacosNamingService, ConfigParam, \
-        RegisterInstanceParam, DeregisterInstanceParam, ListInstanceParam, Instance, Service, GetServiceParam, \
-        SubscribeServiceParam
-except ImportError:
-    nacos = None
-    ClientConfigBuilder = None
-    GRPCConfig = None
-    NacosConfigService = None
-    NacosNamingService = None
-    ConfigParam = None
-    RegisterInstanceParam = None
-    DeregisterInstanceParam = None
-    ListInstanceParam = None
-    Instance = None
-    Service = None
-    GetServiceParam = None
+from v2.nacos import ClientConfigBuilder, GRPCConfig, NacosConfigService, NacosNamingService, ConfigParam, \
+    RegisterInstanceParam, DeregisterInstanceParam, ListInstanceParam, Instance, Service, GetServiceParam, \
+    SubscribeServiceParam
 
 logger = logging.getLogger(__name__)
 
