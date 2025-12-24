@@ -20,7 +20,8 @@ def crawl_web(url: str) -> list[base.Message]:
     ]
 
 
-@mcp.prompt(name="Retrieve information from Doc Knowledge Base")
+@mcp.prompt(name="Retrieve information from Doc Knowledge Base",
+            description="根据用户的查询在文档知识库中找到最匹配的内容)，并返回结果及出处。")
 def retrieval_from_paragraph(query: str) -> list[base.Message]:
     return [
         base.UserMessage("请从文档知识库中检索相关内容，回答用户的问题。"),
