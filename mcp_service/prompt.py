@@ -67,3 +67,110 @@ def retrieval_from_browser_history(
         )
     )
     return messages
+
+
+# ----------------- Generated prompts for tools without exact prompt names -----------------
+
+@mcp.prompt(name="Provide-URL-based-web-content-crawling", description="Prompt wrapper for crawling one or multiple URLs and extracting main content and metadata.")
+def prompt_provide_url_based_web_content_crawling(urls: list[str]) -> list[base.Message]:
+    """Ask the assistant to crawl given URLs and return structured content for each URL."""
+    return [
+        base.UserMessage("Please crawl the following URLs and extract their main content and metadata."),
+        base.UserMessage("URLs:"),
+        base.UserMessage("\n".join(urls) if urls else ""),
+        base.AssistantMessage(
+            "For each URL return a JSON object with fields: url, title, main_text (cleaned), summary (3-5 sentences), language, links (list), and last_modified if available. Do not fabricate content; if the page cannot be reached, return an object with an error field."
+        ),
+    ]
+
+
+@mcp.prompt(name="search-the-content-from-the-web", description="Prompt wrapper for performing web search across multiple engines and returning aggregated content snippets.")
+def prompt_search_the_content_from_the_web(web_content: str) -> list[base.Message]:
+    return [
+        base.UserMessage("Search the web using multiple search engines for the following query or content:"),
+        base.UserMessage(web_content),
+        base.AssistantMessage("Return a ranked list of short excerpts (2-3 sentences) with source URLs and a brief summary of why each result is relevant."),
+    ]
+
+
+@mcp.prompt(name="Search-Github-repositories", description="Prompt helper to search GitHub repositories by name and return concise metadata for each match.")
+def prompt_search_github_repositories(repo_name: str) -> list[base.Message]:
+    return [
+        base.UserMessage("Search GitHub for repositories matching this name or keywords:"),
+        base.UserMessage(repo_name),
+        base.AssistantMessage("Return a JSON array of repositories with fields: name, full_name, description, url, stars, forks, language, license, latest_commit_date, and a 1-2 sentence README summary if available."),
+    ]
+
+
+@mcp.prompt(name="Search-Github-issues", description="Prompt helper to search GitHub issues by snippet and return matching issues with context.")
+def prompt_search_github_issues(issue_snippet: str) -> list[base.Message]:
+    return [
+        base.UserMessage("Search GitHub issues matching the following text/snippet:"),
+        base.UserMessage(issue_snippet),
+        base.AssistantMessage("Return matching issues as a list with fields: title, number, state, url, created_at, updated_at, author, and the issue body or relevant excerpt. Include labels and repository name."),
+    ]
+
+
+@mcp.prompt(name="Search-Github-Code", description="Prompt helper to search GitHub code by code snippet and return matches with file paths and repository info.")
+def prompt_search_github_code(code_snippet: str) -> list[base.Message]:
+    return [
+        base.UserMessage("Search GitHub code for occurrences of the following snippet:"),
+        base.UserMessage(code_snippet),
+        base.AssistantMessage("Return matches with fields: repository, file_path, line_numbers, snippet_excerpt, and file_url. Prefer exact or highly similar matches.")
+    ]
+
+
+@mcp.prompt(name="get-Github-repository-details", description="Prompt helper to fetch detailed information for a given GitHub repository URL.")
+def prompt_get_github_repository_details(repo_url: str) -> list[base.Message]:
+    return [
+        base.UserMessage("Fetch detailed information for this GitHub repository:"),
+        base.UserMessage(repo_url),
+        base.AssistantMessage("Return repository details including: name, full_name, description, url, README summary (3-4 sentences), top languages, license, stars, forks, open_issues_count, recent_commit_summary, and notable files (e.g., setup.py, pyproject.toml, Dockerfile) if present.")
+    ]
+
+
+@mcp.prompt(name="retrieve_qa_kb", description="Prompt helper to search the QA memory and return results with QA_REF anchors for tracking.")
+def prompt_retrieve_qa_kb(query: str, namespace: str, top_k: int = 8) -> list[base.Message]:
+    return [
+        base.UserMessage("Search the QA memory for the query and return up to top_k results with anchor lines [QA_REF qa-xxxx]:"),
+        base.UserMessage("Query:"),
+        base.UserMessage(query),
+        base.UserMessage(f"Namespace: {namespace}, top_k: {top_k}"),
+        base.AssistantMessage("Return results as a list of renderable items including qa_id, anchor, question, answer, confidence, and source metadata.")
+    ]
+
+
+@mcp.prompt(name="qa_record_hit", description="Prompt helper describing when to call qa_record_hit and what payload to send (used/shown).")
+def prompt_qa_record_hit(qa_id: str, namespace: str, used: bool = True, shown: bool = True) -> list[base.Message]:
+    return [
+        base.UserMessage("Record a hit for QA item when it was shown/used in the final answer."),
+        base.UserMessage(f"qa_id: {qa_id}"),
+        base.UserMessage(f"namespace: {namespace}"),
+        base.UserMessage(f"used: {used}, shown: {shown}"),
+        base.AssistantMessage("Call qa_record_hit with the above payload when the QA item was actually included in the model's final response (used=true).")
+    ]
+
+
+@mcp.prompt(name="qa_upsert_candidate", description="Prompt helper for creating candidate QA entries to be upserted into the QA memory.")
+def prompt_qa_upsert_candidate(question_raw: str, answer_raw: str, namespace: str) -> list[base.Message]:
+    return [
+        base.UserMessage("Create a QA candidate entry with the following question and answer. Include brief tags and a scope if available."),
+        base.UserMessage("Question:"),
+        base.UserMessage(question_raw),
+        base.UserMessage("Answer:"),
+        base.UserMessage(answer_raw),
+        base.UserMessage(f"Namespace: {namespace}"),
+        base.AssistantMessage("Return a compact candidate object with fields: question_raw, answer_raw, tags (optional), scope (optional), time_sensitivity (low/medium/high), evidence_refs (optional).")
+    ]
+
+
+@mcp.prompt(name="qa_validate_and_update", description="Prompt helper for validating QA entries after execution and updating their state.")
+def prompt_qa_validate_and_update(qa_id: str, namespace: str, result: str, reason: str = "") -> list[base.Message]:
+    return [
+        base.UserMessage("Provide validation outcome for a QA item after executing or testing the suggested solution."),
+        base.UserMessage(f"qa_id: {qa_id}"),
+        base.UserMessage(f"namespace: {namespace}"),
+        base.UserMessage(f"result: {result}"),
+        base.UserMessage(f"reason: {reason}"),
+        base.AssistantMessage("Return an object indicating the updated validation status and any evidence refs or notes to store alongside the QA entry.")
+    ]
