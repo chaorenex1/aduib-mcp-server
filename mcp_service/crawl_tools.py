@@ -11,7 +11,7 @@ from utils.encoders import merge_dicts
 
 mcp= mcp_context.get()
 
-@mcp.tool(name="Provide URL-based web content crawling", description="Directly crawl and return content from the specified webpage link")
+@mcp.tool(name="Provide-URL-based-web-content-crawling", description="Directly crawl and return content from the specified webpage link")
 async def crawl_web(
         urls:list[HttpUrl],
 )-> Any:
@@ -34,7 +34,7 @@ async def crawl_web(
     return content_list
 
 
-@mcp.tool(name="search the content from the web", description="Search the content from the web using various search engines such as DuckDuckGo, Brave, and Baidu.")
+@mcp.tool(name="search-the-content-from-the-web", description="Search the content from the web using various search engines such as DuckDuckGo, Brave, and Baidu.")
 async def web_search(
         web_content:str
 )-> Any:

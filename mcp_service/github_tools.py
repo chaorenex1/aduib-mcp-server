@@ -6,7 +6,7 @@ from libs import mcp_context
 
 mcp= mcp_context.get()
 
-@mcp.tool(name="Search Github repositories", description="Search GitHub repositories using a specific repo name and return relevant information about the repositories found.")
+@mcp.tool(name="Search-Github-repositories", description="Search GitHub repositories using a specific repo name and return relevant information about the repositories found.")
 async def search_github_repositories(
         repo_name: str
 ) -> Any:
@@ -15,7 +15,7 @@ async def search_github_repositories(
     return results
 
 
-@mcp.tool(name="Search Github issues", description="Search GitHub issues using a specific issue snippet and return relevant information about the issues found.")
+@mcp.tool(name="Search-Github-issues", description="Search GitHub issues using a specific issue snippet and return relevant information about the issues found.")
 async def search_github_issues(
         issue_snippet: str
 ) -> Any:
@@ -24,7 +24,7 @@ async def search_github_issues(
     return results
 
 
-@mcp.tool(name="Search Github Code", description="Search GitHub code using a specific code snippet and return relevant information about the code found.")
+@mcp.tool(name="Search-Github-Code", description="Search GitHub code using a specific code snippet and return relevant information about the code found.")
 async def search_github_code(
         code_snippet: str
 ) -> Any:
@@ -33,7 +33,7 @@ async def search_github_code(
     return results
 
 
-@mcp.tool(name="get Github repository details", description="Get detailed information about a specific GitHub repository using its URL.")
+@mcp.tool(name="get-Github-repository-details", description="Get detailed information about a specific GitHub repository using its URL.")
 async def get_github_repository_details(
         repo_url: HttpUrl
 ) -> Any:
