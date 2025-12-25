@@ -6,7 +6,7 @@ export PYTHONUNBUFFERED=1
 export PYTHONPATH=$(pwd)
 export TZ=Asia/Shanghai
 export DOCKER_ENV=false
-export APP_HOST=10.0.0.96
+export APP_HOST=0.0.0.0
 
 # ===== uv 虚拟环境路径 =====
 export UV_VENV=".venv"
