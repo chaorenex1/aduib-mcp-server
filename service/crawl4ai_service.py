@@ -151,7 +151,7 @@ class Crawl4AIService:
                 ("raw:", "raw://")) else url for url in urls]
             browser_config = BrowserConfig.load(browser_config)
             crawler_config = CrawlerRunConfig.load(crawler_config)
-            crawler_config.cache_mode = CacheMode.ENABLED
+            crawler_config.cache_mode = CacheMode.BYPASS
             crawler_config.stream = stream
 
             from configs.crawl4ai.crawl_rule import CrawlRules

@@ -178,7 +178,7 @@ class CrawlRules(BaseSettings):
                 "name": "github",
                 "url": "github.com",
                 "crawl_mode": "classic",
-                "css_selector": "div.Box-sc-g0xbh4-0.gPrlij h3, div.Box-sc-g0xbh4-0.dcdlju > span, div.Box-sc-g0xbh4-0.gPrlij a, div.Box-sc-g0xbh4-0.gPrlij > ul",
+                "css_selector": "Box-sc-62in7e-0 gwXVXe",
                 "search_engine_url": "https://github.com/search?q={query}&type={type}&p={page}&s=stars&o=desc",
                 "crawl_result_type": "html",
                 "extraction_strategy": "web_content",
