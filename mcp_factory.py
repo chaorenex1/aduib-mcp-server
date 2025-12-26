@@ -4,28 +4,42 @@ import os
 from configs import config
 from fast_mcp import FastMCP
 
-log=logging.getLogger(__name__)
+log = logging.getLogger(__name__)
 
 class MCPFactory:
-    """ Factory class to create and manage FastMCP instances."""
+    """Factory class to create and manage a single FastMCP instance (singleton)."""
     def __init__(self):
+        # Avoid re-initializing if __init__ is called multiple times.
+        if getattr(self, "_initialized", False):
+            return
+        self._initialized = True
         self.mcp = self.init_fast_mcp()
 
-    def get_mcp(self)->FastMCP:
-        return self.mcp
-
     @classmethod
-    def get_mcp_factory(cls)->'MCPFactory':
+    def get_mcp_factory(cls) -> "MCPFactory":
+        """Get the singleton factory instance."""
         return cls()
 
-    def init_fast_mcp(self)->FastMCP:
-        mcp= None
+    def init_fast_mcp(self) -> FastMCP:
+        # If already created, reuse.
+        existing = getattr(self, "mcp", None)
+        if existing is not None:
+            return existing
+
+        mcp = None
         if not config.DISCOVERY_SERVICE_ENABLED:
             from fast_mcp import FastMCP
-            mcp = FastMCP(name=config.APP_NAME,instructions=config.APP_DESCRIPTION,version=config.APP_VERSION,auth_server_provider=None)
+
+            mcp = FastMCP(
+                name=config.APP_NAME,
+                instructions=config.APP_DESCRIPTION,
+                version=config.APP_VERSION,
+                auth_server_provider=None,
+            )
         else:
-            if config.DISCOVERY_SERVICE_TYPE=="nacos":
+            if config.DISCOVERY_SERVICE_TYPE == "nacos":
                 from nacos_mcp_wrapper.server.nacos_settings import NacosSettings
+
                 nacos_settings = NacosSettings(
                     SERVER_ADDR=config.NACOS_SERVER_ADDR if config.NACOS_SERVER_ADDR else os.environ.get("NACOS_SERVER_ADDR"),
                     NAMESPACE=config.NACOS_NAMESPACE if config.NACOS_NAMESPACE else os.environ.get("NACOS_NAMESPACE"),
@@ -38,11 +52,15 @@ class MCPFactory:
                     SERVICE_META_DATA={"transport": config.TRANSPORT_TYPE},
                 )
                 from nacos_mcp import NacosMCP
-                mcp = NacosMCP(name=config.APP_NAME,
-                               nacos_settings=nacos_settings,
-                               instructions=config.APP_DESCRIPTION,
-                               version=config.APP_VERSION,
-                               auth_server_provider=None)
+
+                mcp = NacosMCP(
+                    name=config.APP_NAME,
+                    nacos_settings=nacos_settings,
+                    instructions=config.APP_DESCRIPTION,
+                    version=config.APP_VERSION,
+                    auth_server_provider=None,
+                )
+
         log.info("fast mcp initialized successfully")
         return mcp
 
@@ -61,16 +79,32 @@ class MCPFactory:
         else:
             log.error(f"Unsupported TRANSPORT_TYPE: {config.TRANSPORT_TYPE}")
 
-    async def mount_mcp_app(self,app):
+    async def mount_mcp_app(self, app):
         from mcp_service import load_mcp_plugins
         load_mcp_plugins("mcp_service")
         if config.TRANSPORT_TYPE == "stdio":
             self.mcp.run(transport=config.TRANSPORT_TYPE)
         elif config.TRANSPORT_TYPE == "sse":
-            app.mount("/", app.mcp.sse_app(), name="mcp_see")
+            app.mount("/", self.mcp.sse_app(), name="mcp_see")
         elif config.TRANSPORT_TYPE == "streamable-http":
-            app.mount("/", app.mcp.streamable_http_app(), name="mcp_streamable_http")
+            app.mount("/", self.mcp.streamable_http_app(), name="mcp_streamable_http")
 
         from nacos_mcp import NacosMCP
+
         if isinstance(self.mcp, NacosMCP):
             await self.mcp.register_service(transport=config.TRANSPORT_TYPE)
+
+
+
+
+_mcp_factory_instance = None
+
+def get_mcp_factory() -> MCPFactory:
+    global _mcp_factory_instance
+    if _mcp_factory_instance is None:
+        _mcp_factory_instance = MCPFactory.get_mcp_factory()
+    return _mcp_factory_instance
+
+def get_mcp() -> FastMCP:
+    mcp_factory = get_mcp_factory()
+    return mcp_factory.mcp

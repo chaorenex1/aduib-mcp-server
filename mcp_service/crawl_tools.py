@@ -5,11 +5,11 @@ from pydantic import HttpUrl
 
 from configs.crawl4ai.crawl_rule import browser_config, crawler_config
 from controllers.params import CrawlJobPayload, CrawlJobResponse, WebEngineCrawlJobPayload
-from libs import mcp_context
+from mcp_factory import get_mcp
 from service.crawl4ai_service import Crawl4AIService
 from utils.encoders import merge_dicts
 
-mcp= mcp_context.get()
+mcp = get_mcp()
 
 @mcp.tool(name="Provide-URL-based-web-content-crawling", description="Directly crawl and return content from the specified webpage link")
 async def crawl_web(

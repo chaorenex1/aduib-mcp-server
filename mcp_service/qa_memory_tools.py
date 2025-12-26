@@ -14,11 +14,12 @@ import asyncio
 from typing import Any, Dict, List, Optional
 
 from fast_mcp import Context
-from libs import mcp_context
-from rpc.client.qa_memory_service import QaMemoryService
+from mcp_factory import get_mcp
 
-mcp= mcp_context.get()
-qaMemoryService=QaMemoryService()
+mcp = get_mcp()
+
+from rpc.client.qa_memory_service import QaMemoryService
+qaMemoryService = QaMemoryService()
 
 
 # ---------- helpers for anchors and formatting ----------
@@ -100,32 +101,38 @@ async def retrieve_qa_kb(
 
     formatted_results = [_format_result_item(r) for r in raw_results]
 
+    # Snapshot request-bound context NOW; never touch ctx from background tasks.
+    client_meta = {"client_id": "unknown"}
+
     # Hook: record "shown" hits asynchronously (do not block tool response)
-    async def _record_shown_hits():
-        if not formatted_results:
+    async def _record_shown_hits(client: Dict[str, Any], results: List[Dict[str, Any]]):
+        if not results:
             return
 
-        client_meta = {
-            "client_id": ctx.client_id if ctx.client_id else "unknown",
-            "user_id": None,
-        }
         tasks = []
-        for item in formatted_results:
+        for item in results:
             qa_id = item["qa_id"]
             hit_payload = {
                 "qa_id": qa_id,
                 "namespace": namespace,
                 "shown": True,
                 "used": False,
-                "client": client_meta,
+                "client": client,
             }
             tasks.append(qaMemoryService.qa_record_hit(**hit_payload))
 
-        # fire-and-forget style; you may want to add logging / error handling
-        await asyncio.gather(*tasks, return_exceptions=True)
+        try:
+            # fire-and-forget style; you may want to add logging / error handling
+            await asyncio.gather(*tasks, return_exceptions=True)
+        except asyncio.CancelledError:
+            # best-effort background task; ignore cancellation during shutdown
+            return
 
     # run the hook in background without delaying the main response
-    asyncio.create_task(_record_shown_hits())
+    if formatted_results:
+        task = asyncio.create_task(_record_shown_hits(client_meta, formatted_results))
+        # Ensure exceptions are consumed to avoid "Task exception was never retrieved".
+        task.add_done_callback(lambda t: t.exception() if not t.cancelled() else None)
 
     return {
         "schema_version": schema_version,
@@ -158,9 +165,7 @@ async def qa_record_hit(
       - For each qa_id, call qa_record_hit(qa_id, namespace, used=true)
     """
     client_meta = {
-        "client_id": ctx.client_id if ctx.client_id else "unknown",
-        "session_id": None,
-        "user_id": None,
+        "client_id": "unknown",
     }
     payload = {
         "qa_id": qa_id,
@@ -192,7 +197,7 @@ async def qa_upsert_candidate(
     evidence_refs: Optional[List[str]] = None,
 ) -> Dict[str, Any]:
     client_meta = {
-        "client_id": ctx.client_id if ctx.client_id else "unknown",
+        "client_id": "unknown",
         "session_id": None,
         "user_id": None,
     }
@@ -242,9 +247,7 @@ async def qa_validate_and_update(
       - CLI or wrapper calls this tool to inform QA Memory Service
     """
     client_meta = {
-        "client_id": ctx.client_id if ctx.client_id else "unknown",
-        "session_id": None,
-        "user_id": None,
+        "client_id": "unknown",
     }
 
     execution: Dict[str, Any] = {}

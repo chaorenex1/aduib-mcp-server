@@ -1,7 +1,8 @@
 import asyncio
 
 from app_factory import create_app, init_crawler_pool
-from libs import mcp_context, app_context
+from libs import app_context
+from mcp_factory import get_mcp_factory
 
 """
 Main entry point for the AduibAI application.
@@ -24,16 +25,10 @@ if not app_context.get():
 
 async def run_mcp_server(**kwargs):
     """Run the MCP server."""
-    from mcp_factory import MCPFactory
-    import uvicorn
-
-    mcp_factory = MCPFactory.get_mcp_factory()
-    mcp = mcp_factory.get_mcp()
-    mcp_context.set(mcp)
-    app.mcp = mcp
     init_crawler_pool(app)
     app_context.set(app)
-    await mcp_factory.mount_mcp_app(app)
+    await get_mcp_factory().mount_mcp_app(app)
+    import uvicorn
     config = uvicorn.Config(app=app, host=app.config.APP_HOST, port=app.config.APP_PORT, **kwargs)
     await uvicorn.Server(config).serve()
 

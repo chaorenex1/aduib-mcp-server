@@ -1,9 +1,10 @@
 from typing import Any
 
-from libs import mcp_context
+from mcp_factory import get_mcp
 from rpc.client.rag_service import RagService
 
-mcp= mcp_context.get()
+mcp = get_mcp()
+
 rag_service = RagService()
 
 

@@ -2,9 +2,9 @@ from typing import Any
 
 from pydantic import HttpUrl
 
-from libs import mcp_context
+from mcp_factory import get_mcp
 
-mcp= mcp_context.get()
+mcp = get_mcp()
 
 @mcp.tool(name="Search-Github-repositories", description="Search GitHub repositories using a specific repo name and return relevant information about the repositories found.")
 async def search_github_repositories(

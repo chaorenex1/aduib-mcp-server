@@ -1,12 +1,8 @@
 from mcp.server.fastmcp.prompts import base
 
-from libs import mcp_context
+from mcp_factory import get_mcp
 
-mcp= mcp_context.get()
-
-# @mcp.prompt(name="Code Review")
-# def review_code(code: str) -> str:
-#     return f"Please review this code:\n\n{code}"
+mcp = get_mcp()
 
 
 @mcp.prompt(name="爬取网页内容助手", description="根据用户的需求，爬取指定网页的内容，并提取其中的主要信息，返回给用户。")

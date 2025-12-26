@@ -154,7 +154,8 @@ async def lifespan(app: AduibAIApp) -> AsyncIterator[None]:
     # 如果是 streamable-http 模式，开启 session_manager
     session_manager = None
     if config.TRANSPORT_TYPE == "streamable-http":
-        session_manager = app.mcp.session_manager
+        from mcp_factory import get_mcp
+        session_manager = get_mcp().session_manager
 
     if session_manager:
         try:
