@@ -12,7 +12,7 @@ dependencies = [
     "bcrypt>=4.3.0",
     "fastapi>=0.116.1",
     "nacos-sdk-python==2.0.9",
-    "aduib_rpc>=1.0.10",
+    "aduib_rpc>=1.0.21",
     "nacos-mcp-wrapper-python>=1.0.9",
     "psycopg2-binary>=2.9.10",
     "pydantic>=2.11.3",
@@ -37,3 +37,7 @@ dev= [
 [[tool.uv.index]]
 url = "http://mirrors.aliyun.com/pypi/simple/"
 default = true
+
+[[tool.uv.index]]
+name = "pypi"
+url = "https://pypi.org/simple"
