@@ -89,39 +89,42 @@ def prompt_search_the_content_from_the_web(web_content: str) -> list[base.Messag
     ]
 
 
-@mcp.prompt(name="Search-Github-repositories", description="Prompt helper to search GitHub repositories by name and return concise metadata for each match.")
-def prompt_search_github_repositories(repo_name: str) -> list[base.Message]:
+@mcp.prompt(name="Search-Github-repositories", description="Prompt helper to search GitHub repositories with optional language and star filters. / 搜索 GitHub 仓库，支持语言和星标过滤。")
+def prompt_search_github_repositories(query: str, first: int = 10, language: str = "", min_stars: int = 0) -> list[base.Message]:
     return [
-        base.UserMessage("Search GitHub for repositories matching this name or keywords:"),
-        base.UserMessage(repo_name),
-        base.AssistantMessage("Return a JSON array of repositories with fields: name, full_name, description, url, stars, forks, language, license, latest_commit_date, and a 1-2 sentence README summary if available."),
+        base.UserMessage("Search GitHub for repositories matching this query:"),
+        base.UserMessage(f"Query: {query}, Limit: {first}"),
+        base.UserMessage(f"Language filter: {language}" if language else ""),
+        base.UserMessage(f"Minimum stars: {min_stars}" if min_stars > 0 else ""),
+        base.AssistantMessage("Return repositories with fields: name, description, url, stargazerCount, forkCount, primaryLanguage, updatedAt, and owner.")
     ]
 
 
-@mcp.prompt(name="Search-Github-issues", description="Prompt helper to search GitHub issues by snippet and return matching issues with context.")
-def prompt_search_github_issues(issue_snippet: str) -> list[base.Message]:
+@mcp.prompt(name="Search-Github-issues", description="Prompt helper to search GitHub issues with optional state filter. / 搜索 GitHub Issue，支持状态过滤。")
+def prompt_search_github_issues(query: str, first: int = 10, state: str = "") -> list[base.Message]:
     return [
-        base.UserMessage("Search GitHub issues matching the following text/snippet:"),
-        base.UserMessage(issue_snippet),
-        base.AssistantMessage("Return matching issues as a list with fields: title, number, state, url, created_at, updated_at, author, and the issue body or relevant excerpt. Include labels and repository name."),
+        base.UserMessage("Search GitHub issues matching this query:"),
+        base.UserMessage(f"Query: {query}, Limit: {first}"),
+        base.UserMessage(f"State filter: {state}" if state else ""),
+        base.AssistantMessage("Return issues with fields: title, url, state, createdAt, author, and repository nameWithOwner.")
     ]
 
 
-@mcp.prompt(name="Search-Github-Code", description="Prompt helper to search GitHub code by code snippet and return matches with file paths and repository info.")
-def prompt_search_github_code(code_snippet: str) -> list[base.Message]:
+@mcp.prompt(name="Search-Github-Code", description="Prompt helper to search GitHub code snippets. / 搜索 GitHub 代码片段。")
+def prompt_search_github_code(query: str, first: int = 10) -> list[base.Message]:
     return [
-        base.UserMessage("Search GitHub code for occurrences of the following snippet:"),
-        base.UserMessage(code_snippet),
-        base.AssistantMessage("Return matches with fields: repository, file_path, line_numbers, snippet_excerpt, and file_url. Prefer exact or highly similar matches.")
+        base.UserMessage("Search GitHub code for this query:"),
+        base.UserMessage(f"Query: {query}, Limit: {first}"),
+        base.AssistantMessage("Return code matches with fields: path, repository nameWithOwner and url, textMatches fragments.")
     ]
 
 
-@mcp.prompt(name="get-Github-repository-details", description="Prompt helper to fetch detailed information for a given GitHub repository URL.")
-def prompt_get_github_repository_details(repo_url: str) -> list[base.Message]:
+@mcp.prompt(name="get-Github-repository-details", description="Prompt helper to fetch repository details via GraphQL API. / 通过 GraphQL API 获取仓库详情。")
+def prompt_get_github_repository_details(owner: str, repo_name: str) -> list[base.Message]:
     return [
         base.UserMessage("Fetch detailed information for this GitHub repository:"),
-        base.UserMessage(repo_url),
-        base.AssistantMessage("Return repository details including: name, full_name, description, url, README summary (3-4 sentences), top languages, license, stars, forks, open_issues_count, recent_commit_summary, and notable files (e.g., setup.py, pyproject.toml, Dockerfile) if present.")
+        base.UserMessage(f"Owner: {owner}, Repository: {repo_name}"),
+        base.AssistantMessage("Return repository details: name, description, url, stargazerCount, forkCount, primaryLanguage, updatedAt, and owner login.")
     ]
 
 
@@ -169,4 +172,41 @@ def prompt_qa_validate_and_update(qa_id: str, namespace: str, result: str, reaso
         base.UserMessage(f"result: {result}"),
         base.UserMessage(f"reason: {reason}"),
         base.AssistantMessage("Return an object indicating the updated validation status and any evidence refs or notes to store alongside the QA entry.")
+    ]
+
+
+@mcp.prompt(name="get-Github-pull-requests", description="Prompt helper to fetch pull requests from a GitHub repository with optional state filtering.")
+def prompt_get_github_pull_requests(owner: str, repo_name: str, first: int = 10, states: str = "") -> list[base.Message]:
+    return [
+        base.UserMessage("Fetch pull requests from this GitHub repository:"),
+        base.UserMessage(f"Owner: {owner}, Repository: {repo_name}"),
+        base.UserMessage(f"Limit: {first}" + (f", States filter: {states}" if states else "")),
+        base.AssistantMessage("Return PR list with fields: number, title, url, state, author, created_at, updated_at, additions, deletions, changed_files, and mergeable status.")
+    ]
+
+
+@mcp.prompt(name="get-Github-commits", description="Prompt helper to fetch recent commits from a GitHub repository's default branch.")
+def prompt_get_github_commits(owner: str, repo_name: str, first: int = 10) -> list[base.Message]:
+    return [
+        base.UserMessage("Fetch recent commits from this GitHub repository:"),
+        base.UserMessage(f"Owner: {owner}, Repository: {repo_name}, Limit: {first}"),
+        base.AssistantMessage("Return commit list with fields: oid (SHA), message_headline, message, author_name, author_email, committed_date, and commit_url.")
+    ]
+
+
+@mcp.prompt(name="get-Github-releases", description="Prompt helper to fetch releases from a GitHub repository.")
+def prompt_get_github_releases(owner: str, repo_name: str, first: int = 10) -> list[base.Message]:
+    return [
+        base.UserMessage("Fetch releases from this GitHub repository:"),
+        base.UserMessage(f"Owner: {owner}, Repository: {repo_name}, Limit: {first}"),
+        base.AssistantMessage("Return release list with fields: name, tag_name, url, published_at, description, is_prerelease, is_draft, and author.")
+    ]
+
+
+@mcp.prompt(name="get-Github-readme", description="Prompt helper to fetch README content from a GitHub repository.")
+def prompt_get_github_readme(owner: str, repo_name: str, path: str = "README.md") -> list[base.Message]:
+    return [
+        base.UserMessage("Fetch README content from this GitHub repository:"),
+        base.UserMessage(f"Owner: {owner}, Repository: {repo_name}, Path: {path}"),
+        base.AssistantMessage("Return the full README content as markdown text. If the file doesn't exist, indicate that clearly.")
     ]

@@ -22,6 +22,8 @@ LAST_USED: Dict[str, float] = {}
 LOCK = asyncio.Lock()
 CRAWL_RULES: list[CrawlRuleGroup] = []
 PARSER_CACHE: Dict[str, any] = {}
+MEMORY_WARNING_THRESHOLD = 70  # percent
+MEMORY_CRITICAL_THRESHOLD = 85  # percent
 
 logger = logging.getLogger(__name__)
 
@@ -180,6 +182,43 @@ def _sig(cfg: BrowserConfig) -> str:
     return hashlib.sha1(payload.encode()).hexdigest()
 
 
+async def check_memory_and_cleanup() -> bool:
+    """Check memory pressure and cleanup if needed.
+
+    Returns:
+        bool: True if new browser can be created, False if denied
+    """
+    from contextlib import suppress
+
+    memory = psutil.virtual_memory()
+
+    if memory.percent >= MEMORY_CRITICAL_THRESHOLD:
+        logger.warning(
+            f"Critical memory pressure: {memory.percent:.1f}%, "
+            f"available: {memory.available // (1024*1024)}MB"
+        )
+        # Try to evict oldest crawler
+        async with LOCK:
+            if POOL and LAST_USED:
+                oldest_sig = min(LAST_USED, key=LAST_USED.get)
+                crawler = POOL.pop(oldest_sig, None)
+                LAST_USED.pop(oldest_sig, None)
+                if crawler:
+                    with suppress(Exception):
+                        await crawler.close()
+                    logger.info("Evicted oldest crawler due to memory pressure")
+        return False  # Still deny new browser after cleanup
+
+    if memory.percent >= MEMORY_WARNING_THRESHOLD:
+        logger.info(
+            f"Memory warning: {memory.percent:.1f}%, "
+            f"available: {memory.available // (1024*1024)}MB"
+        )
+        return True  # Allow but logged warning
+
+    return True  # Normal
+
+
 async def get_crawler(cfg: BrowserConfig) -> AsyncWebCrawler:
     sig = None
     try:
@@ -201,8 +240,15 @@ async def get_crawler(cfg: BrowserConfig) -> AsyncWebCrawler:
             if sig in POOL:
                 LAST_USED[sig] = time.time();
                 return POOL[sig]
-            if psutil.virtual_memory().percent >= config.MEMORY_THRESHOLD_PRECENT:
-                raise MemoryError("RAM pressure – new browser denied")
+        if not await check_memory_and_cleanup():
+            memory = psutil.virtual_memory()
+            raise MemoryError(
+                f"RAM pressure ({memory.percent:.1f}%) - new browser denied"
+            )
+        async with LOCK:
+            if sig in POOL:
+                LAST_USED[sig] = time.time();
+                return POOL[sig]
             undetected_adapter = UndetectedAdapter()
             # Create the crawler strategy with undetected adapter
             crawler_strategy = AsyncPlaywrightCrawlerStrategy(

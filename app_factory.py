@@ -16,6 +16,7 @@ from component.log.app_logging import init_logging
 from configs import config
 from controllers.route import api_router
 from libs.context import LoggingMiddleware, TraceIdContextMiddleware, ApiKeyContextMiddleware
+from libs.exception_middleware import GlobalExceptionMiddleware, CircuitBreakerMiddleware
 
 log=logging.getLogger(__name__)
 
@@ -43,6 +44,12 @@ def create_app_with_configs()->AduibAIApp:
     else:
         app.app_home = os.getenv("user.home", str(pathlib.Path.home())) + f"/.{config.APP_NAME.lower()}"
     app.include_router(api_router)
+
+    # Global exception handling (outermost - catches all)
+    app.add_middleware(GlobalExceptionMiddleware)
+    # Circuit breaker (opens after 10 failures, resets after 60s)
+    app.add_middleware(CircuitBreakerMiddleware, failure_threshold=10, reset_timeout=60.0)
+
     if config.AUTH_ENABLED:
         app.add_middleware(ApiKeyContextMiddleware)
     if config.DEBUG:
@@ -143,13 +150,18 @@ async def lifespan(app: AduibAIApp) -> AsyncIterator[None]:
     asyncio.create_task(run_service_register(app))
     # --- 初始化 ---
     # 预热 crawler
-    from component.crawl4ai.crawler_pool import get_crawler
+    from component.crawl4ai.crawler_pool import get_crawler, janitor, close_all
     from crawl4ai import BrowserConfig
     from configs.crawl4ai.crawl_rule import browser_config
     await get_crawler(BrowserConfig.load(browser_config))
 
-    # 开启 janitor
-    # app.state.janitor = asyncio.create_task(janitor())
+    # 开启 janitor 清理闲置浏览器
+    janitor_task = asyncio.create_task(janitor())
+    janitor_task.add_done_callback(
+        lambda t: log.error(f"Janitor task crashed: {t.exception()}")
+        if t.exception() else None
+    )
+    app.state.janitor = janitor_task
 
     # 如果是 streamable-http 模式，开启 session_manager
     session_manager = None
@@ -157,17 +169,38 @@ async def lifespan(app: AduibAIApp) -> AsyncIterator[None]:
         from mcp_factory import get_mcp
         session_manager = get_mcp().session_manager
 
+    # Session Manager 恢复配置
+    MAX_SESSION_RETRIES = 3
+    RETRY_BACKOFF_BASE = 2
+
     if session_manager:
-        try:
-            async with session_manager.run():
-                yield
-        except Exception as e:
-            log.error(f"Session manager error: {e}", exc_info=True)
-            async with session_manager.run():
-                yield
+        last_error = None
+        for attempt in range(MAX_SESSION_RETRIES):
+            try:
+                async with session_manager.run():
+                    yield
+                    return
+            except asyncio.CancelledError:
+                raise
+            except Exception as e:
+                last_error = e
+                log.error(
+                    f"Session manager error (attempt {attempt + 1}/{MAX_SESSION_RETRIES}): {e}",
+                    exc_info=True,
+                )
+                if attempt < MAX_SESSION_RETRIES - 1:
+                    backoff = RETRY_BACKOFF_BASE ** attempt
+                    log.info(f"Retrying session manager in {backoff}s...")
+                    await asyncio.sleep(backoff)
+
+        log.critical(
+            f"Session manager failed after {MAX_SESSION_RETRIES} attempts, running in degraded mode"
+        )
+        yield
     else:
         yield
 
     # --- 清理 ---
-    # app.state.janitor.cancel()
-    # await close_all()
+    if hasattr(app.state, 'janitor') and app.state.janitor:
+        app.state.janitor.cancel()
+    await close_all()

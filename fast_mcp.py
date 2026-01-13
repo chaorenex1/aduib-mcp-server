@@ -2,6 +2,7 @@
 
 from __future__ import annotations as _annotations
 
+import asyncio
 import inspect
 import logging
 import re
@@ -65,6 +66,7 @@ from starlette.types import Receive, Scope, Send
 from configs import config
 
 logger=logging.getLogger(__name__)
+RESOURCE_READ_TIMEOUT = 30  # seconds
 
 
 class Settings(BaseSettings, Generic[LifespanResultT]):
@@ -290,10 +292,21 @@ class FastMCP:
         self, name: str, arguments: dict[str, Any]
     ) -> Sequence[TextContent | ImageContent | EmbeddedResource]:
         """Call a tool by name with arguments."""
-        context = self.get_context()
-        result = await self._tool_manager.call_tool(name, arguments, context=context)
-        converted_result = _convert_to_content(result)
-        return converted_result
+        try:
+            context = self.get_context()
+            result = await self._tool_manager.call_tool(name, arguments, context=context)
+            converted_result = _convert_to_content(result)
+            return converted_result
+        except asyncio.CancelledError:
+            raise  # 允许取消信号传播
+        except Exception as e:
+            logger.exception(f"Tool execution failed: {name}, args: {arguments}")
+            return [
+                TextContent(
+                    type="text",
+                    text=f"Tool execution error: {type(e).__name__}: {str(e)}",
+                )
+            ]
 
     async def list_resources(self) -> list[MCPResource]:
         """List all available resources."""
@@ -328,8 +341,15 @@ class FastMCP:
             raise ResourceError(f"Unknown resource: {uri}")
 
         try:
-            content = await resource.read()
+            content = await asyncio.wait_for(
+                resource.read(),
+                timeout=RESOURCE_READ_TIMEOUT,
+            )
             return [ReadResourceContents(content=content, mime_type=resource.mime_type)]
+        except asyncio.TimeoutError:
+            raise ResourceError(
+                f"Resource read timeout after {RESOURCE_READ_TIMEOUT}s: {uri}"
+            )
         except Exception as e:
             raise ResourceError(str(e))
 
