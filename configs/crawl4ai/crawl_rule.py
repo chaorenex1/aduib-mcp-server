@@ -10,11 +10,11 @@ from utils import get_domain_url
 browser_config={
 
         "use_persistent_context":False,
-        "browser_mode":"dedicated",
-        # "cdp_url": "ws://127.0.0.1:9222",
+        "browser_mode":"builtin",
+        # "cdp_url": "ws://10.0.0.96:43959/",
         "text_mode": False,
         "headless": True,
-        "enable_stealth": True,
+        "enable_stealth": False,
         # "proxy_config": {
         #     "server": "",
         #     "username": "",
