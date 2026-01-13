@@ -114,7 +114,7 @@ async def run_service_register(app: AduibAIApp):
         "DISCOVERY_SERVICE_ENABLED": app.config.DISCOVERY_SERVICE_ENABLED,
         "DISCOVERY_SERVICE_TYPE": app.config.DISCOVERY_SERVICE_TYPE,
         "SERVICE_TRANSPORT_SCHEME": app.config.SERVICE_TRANSPORT_SCHEME,
-        "APP_NAME": app.config.APP_NAME+f"-{app.config.SERVICE_TRANSPORT_SCHEME}",
+        "APP_NAME": app.config.APP_NAME,
     }
     from aduib_rpc.discover.registry.registry_factory import ServiceRegistryFactory
     from aduib_rpc.discover.entities import ServiceInstance
