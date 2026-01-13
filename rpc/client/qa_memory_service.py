@@ -15,7 +15,7 @@ from typing import Any, Dict, List, Optional
 from aduib_rpc.server.rpc_execution.service_call import client
 
 
-@client(service_name="aduib-ai-app")
+@client(service_name="aduib-ai")
 class QaMemoryService:
 
     async def retrieve_qa_kb(
