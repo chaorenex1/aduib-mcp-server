@@ -8,8 +8,6 @@ def get_local_ip():
         s.connect(('www.baidu.com', 80))  # 连接到一个外部服务器
         # 获取本地 IP 地址
         local_ip = s.getsockname()[0]
-        if local_ip.startswith("127.") or local_ip == "192.18.":
-            local_ip = s.getsockname()[1]
     finally:
         s.close()
     return local_ip
