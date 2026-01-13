@@ -13,7 +13,6 @@ MCP Wrapper for QA Memory Service
 import asyncio
 from typing import Any, Dict, List, Optional
 
-from fast_mcp import Context
 from mcp_factory import get_mcp
 
 mcp = get_mcp()
@@ -77,7 +76,6 @@ def _format_result_item(item: Dict[str, Any]) -> Dict[str, Any]:
     ),
 )
 async def retrieve_qa_kb(
-    ctx: Context,
     query: str,
     namespace: str,
     top_k: int = 8,
@@ -151,7 +149,6 @@ async def retrieve_qa_kb(
     ),
 )
 async def qa_record_hit(
-    ctx: Context,
     qa_id: str,
     namespace: str,
     used: bool = True,
@@ -187,7 +184,6 @@ async def qa_record_hit(
     ),
 )
 async def qa_upsert_candidate(
-    ctx: Context,
     question_raw: str,
     answer_raw: str,
     namespace: str,
@@ -227,7 +223,6 @@ async def qa_upsert_candidate(
     ),
 )
 async def qa_validate_and_update(
-    ctx: Context,
     qa_id: str,
     namespace: str,
     result: str,
