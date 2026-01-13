@@ -3,7 +3,7 @@ from typing import Any
 from aduib_rpc.server.rpc_execution.service_call import client
 
 
-@client(service_name="aduib-ai")
+@client(service_name="aduib-ai-app")
 class RagService:
     """RAG Service for handling retrieval-augmented generation requests."""
     async def retrieval_from_paragraph(self, query: str) -> dict[str, Any]:
