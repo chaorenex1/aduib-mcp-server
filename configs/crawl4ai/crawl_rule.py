@@ -12,9 +12,12 @@ browser_config={
         "use_persistent_context":False,
         "browser_mode":"builtin",
         # "cdp_url": "ws://10.0.0.96:43959/",
+        # "host":"12.0.0.1",
+        "debugging_port": 9222,
         "text_mode": False,
         "headless": True,
         "enable_stealth": False,
+        "use_managed_browser":True,
         # "proxy_config": {
         #     "server": "",
         #     "username": "",
