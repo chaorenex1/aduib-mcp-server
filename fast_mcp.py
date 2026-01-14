@@ -870,11 +870,14 @@ class FastMCP:
 
         routes.extend(self._custom_starlette_routes)
 
+        # Note: lifespan is NOT set here because when this Starlette app is mounted
+        # as a sub-application, its lifespan will NOT be invoked. The parent FastAPI
+        # application's lifespan (in app_factory.py) is responsible for calling
+        # session_manager.run() to initialize the task group.
         return Starlette(
             debug=self.settings.debug,
             routes=routes,
             middleware=middleware,
-            lifespan=lambda app: self.session_manager.run(),
         )
 
     async def list_prompts(self) -> list[MCPPrompt]:
